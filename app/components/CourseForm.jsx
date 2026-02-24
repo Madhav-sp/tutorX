@@ -39,6 +39,11 @@ export default function CourseForm() {
       if (!res.ok) throw new Error(data.error || "Something went wrong");
 
       if (data.success) {
+        // Clear dashboard cache
+        sessionStorage.removeItem("dashboard_courses_v2");
+        sessionStorage.removeItem("dashboard_progress_v2");
+        sessionStorage.removeItem("dashboard_stats_v2");
+
         router.push(`/course/${data.courseId}`);
       }
     } catch (err) {

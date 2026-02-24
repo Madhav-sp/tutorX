@@ -1,11 +1,18 @@
 "use client";
 import CourseRoadmap from "@/app/components/CourseRoadmap";
+import FloatingNotepad from "@/app/components/FloatingNotepad";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { FaArrowLeft, FaCode } from "react-icons/fa6";
+import CodeEditor from "@/app/components/CodeEditor";
+
 
 /* ================================================= */
 /* ================= MAIN COMPONENT ================= */
 /* ================================================= */
 export default function CourseUI({ course }) {
+  const router = useRouter();
+
   const [activeChapterIndex, setActiveChapterIndex] = useState(0);
   const [activeTopicIndex, setActiveTopicIndex] = useState(0);
   const [view, setView] = useState("content");
@@ -41,8 +48,24 @@ export default function CourseUI({ course }) {
       {/* ================= SIDEBAR ================= */}
       <div className="w-80 border-r border-white/10 overflow-y-auto">
         {/* Header */}
-        <div className="p-6 border-b border-white/10">
-          <div className="text-xl text-gray-500 mb-1">Course</div>
+        <div className="p-6 border-b border-white/10 space-y-2">
+          {/* BACK TO DASHBOARD */}
+          <button
+            onClick={() => {
+              sessionStorage.removeItem("dashboard_courses_v2");
+              sessionStorage.removeItem("dashboard_progress_v2");
+              sessionStorage.removeItem("dashboard_stats_v2");
+              router.push("/dashboard");
+            }}
+            className="flex items-center gap-1
+             text-xs text-gray-500
+             hover:text-orange-400 transition"
+          >
+            <FaArrowLeft className="text-[10px]" />
+            <span>Back to Dashboard</span>
+          </button>
+
+          <div className="text-xl text-gray-500">Course</div>
           <div className="text-lg font-semibold text-white capitalize">
             {course.title}
           </div>
@@ -73,11 +96,10 @@ export default function CourseUI({ course }) {
                   setActiveTopicIndex(0);
                   setView("content");
                 }}
-                className={`w-full text-left text-sm font-medium transition-colors px-3 py-2 rounded-lg ${
-                  ci === activeChapterIndex
-                    ? "text-orange-400 bg-orange-500/10"
-                    : "text-gray-400 hover:text-gray-200 hover:bg-white/5"
-                }`}
+                className={`w-full text-left text-sm font-medium transition-colors px-3 py-2 rounded-lg ${ci === activeChapterIndex
+                  ? "text-orange-400 bg-orange-500/10"
+                  : "text-gray-400 hover:text-gray-200 hover:bg-white/5"
+                  }`}
               >
                 {ci + 1}. {ch.chapterTitle}
               </button>
@@ -96,11 +118,10 @@ export default function CourseUI({ course }) {
                           setActiveTopicIndex(ti);
                           setView("content");
                         }}
-                        className={`flex items-center justify-between w-full text-left text-sm transition-colors px-3 py-1.5 rounded ${
-                          ti === activeTopicIndex
-                            ? "text-gray-200 bg-white/5"
-                            : "text-gray-500 hover:text-gray-300 hover:bg-white/5"
-                        }`}
+                        className={`flex items-center justify-between w-full text-left text-sm transition-colors px-3 py-1.5 rounded ${ti === activeTopicIndex
+                          ? "text-gray-200 bg-white/5"
+                          : "text-gray-500 hover:text-gray-300 hover:bg-white/5"
+                          }`}
                       >
                         <span>{t.title}</span>
                         {completed && (
@@ -151,6 +172,16 @@ export default function CourseUI({ course }) {
           >
             ✏️ Quiz
           </button>
+          <button
+            onClick={() => setView("practice")}
+            className={`flex items-center gap-2 w-full text-left px-3 py-2 rounded text-sm transition-colors ${view === "practice"
+              ? "text-orange-400 bg-orange-500/10"
+              : "text-gray-400 hover:text-gray-200 hover:bg-white/5"
+              }`}
+          >
+            <FaCode className="text-xs" />
+            <span>Practice Workspace</span>
+          </button>
         </div>
       </div>
 
@@ -194,7 +225,6 @@ export default function CourseUI({ course }) {
                   ),
                 };
               });
-
             }}
             onNext={() => {
               const currentChapter = course.chapters[activeChapterIndex];
@@ -230,7 +260,10 @@ export default function CourseUI({ course }) {
             }}
           />
         )}
+
+        {view === "practice" && <CodeEditor />}
       </div>
+      <FloatingNotepad courseId={course._id} />
     </div>
   );
 }
@@ -277,6 +310,31 @@ function ArticleView({
   return (
     <div className="max-w-4xl mx-auto px-8 py-12">
       <h1 className="text-4xl font-bold text-white mb-8">{topic.title}</h1>
+
+      {/* VIDEO REFERENCES - Show if it's the first topic of the chapter and has videos */}
+      {activeTopicIndex === 0 && course.chapters[activeChapterIndex]?.videos?.length > 0 && (
+        <div className="mb-12 space-y-6">
+          <div className="flex items-center gap-2 text-orange-400">
+            <span className="text-xs font-bold uppercase tracking-widest">Video Tutorials</span>
+            <div className="h-px flex-1 bg-orange-500/20" />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {course.chapters[activeChapterIndex].videos.map((videoId, idx) => (
+              <div key={idx} className="aspect-video rounded-xl overflow-hidden border border-white/10 bg-gray-900 shadow-2xl">
+                <iframe
+                  width="100%"
+                  height="100%"
+                  src={`https://www.youtube.com/embed/${videoId}`}
+                  title="YouTube video player"
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowFullScreen
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {topic.content.map((b, i) => {
         switch (b.type) {
@@ -549,9 +607,8 @@ function FlashcardStudy({ flashcards }) {
         onClick={() => setFlipped((f) => !f)}
       >
         <div
-          className={`relative w-full h-full transition-transform duration-500 preserve-3d ${
-            flipped ? "rotate-y-180" : ""
-          }`}
+          className={`relative w-full h-full transition-transform duration-500 preserve-3d ${flipped ? "rotate-y-180" : ""
+            }`}
           style={{ transformStyle: "preserve-3d" }}
         >
           <div
@@ -616,9 +673,8 @@ function FlipCard({ front, back, index }) {
       onClick={() => setFlipped((f) => !f)}
     >
       <div
-        className={`relative w-full h-full transition-transform duration-500 preserve-3d ${
-          flipped ? "rotate-y-180" : ""
-        }`}
+        className={`relative w-full h-full transition-transform duration-500 preserve-3d ${flipped ? "rotate-y-180" : ""
+          }`}
         style={{ transformStyle: "preserve-3d" }}
       >
         <div

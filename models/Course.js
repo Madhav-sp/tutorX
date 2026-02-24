@@ -68,6 +68,7 @@ const ChapterSchema = new mongoose.Schema({
   chapterTitle: String,
   duration: String,
   topics: [TopicSchema],
+  videos: [String],
   completed: { type: Boolean, default: false },
 });
 

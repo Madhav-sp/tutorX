@@ -23,7 +23,7 @@ import OrangePlusButton from "../components/button";
 /* ================= PAGE ================= */
 
 export default function DashboardPage() {
-  
+
   return (
     <div className="flex h-screen bg-[#0b0b0c] text-gray-300 font-sans">
       <Sidebar />
@@ -70,11 +70,10 @@ function Sidebar() {
             {navItems.map((item, i) => (
               <button
                 key={i}
-                className={`p-3 rounded-xl transition-colors ${
-                  item.active
+                className={`p-3 rounded-xl transition-colors ${item.active
                     ? "bg-white/10 text-orange-400"
                     : "text-gray-500 hover:text-gray-200 hover:bg-white/5"
-                }`}
+                  }`}
                 title={item.label}
                 onClick={() => router.push(item.address)}
               >
@@ -465,7 +464,7 @@ function TopBar() {
 
 //             <div>
 //               <h3 className="text-xl font-semibold text-white mb-3">
-//                 Try Notebook LM
+//                 Try NotebookLLM
 //               </h3>
 //               <p className="text-sm text-gray-400">
 //                 Upload PDFs, generate summaries, notes, flashcards and chat with
@@ -752,7 +751,7 @@ function MainContent() {
 
             <div>
               <h3 className="text-xl font-semibold text-white mb-3">
-                Try Notebook LM
+                Try NotebookLLM
               </h3>
               <p className="text-sm text-gray-400">
                 Upload PDFs, generate summaries, notes, flashcards and chat with
@@ -785,40 +784,40 @@ function MainContent() {
 function RightPanel() {
   const { user } = useUser();
   const [upcoming, setUpcoming] = useState([]);
- useEffect(() => {
-   if (!user) return;
+  useEffect(() => {
+    if (!user) return;
 
-   fetch("/api/goals", {
-     headers: {
-       "x-user-id": user.id, // ✅ THIS WAS MISSING
-     },
-   })
-     .then((res) => res.json())
-     .then((data) => {
-       const upcomingTasks = (data || [])
-         .filter((t) => !t.completed)
-         .slice(0, 2)
-         .map((t) => ({
-           label: t.text,
-           time: "Today",
-         }));
+    fetch("/api/goals", {
+      headers: {
+        "x-user-id": user.id, // ✅ THIS WAS MISSING
+      },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        const upcomingTasks = (data || [])
+          .filter((t) => !t.completed)
+          .slice(0, 2)
+          .map((t) => ({
+            label: t.text,
+            time: "Today",
+          }));
 
-       if (upcomingTasks.length > 0) {
-         setUpcoming(upcomingTasks);
-       } else {
-         setUpcoming([
-           { label: "DSA Practice", time: "Today" },
-           { label: "Java Revision", time: "Today" },
-         ]);
-       }
-     })
-     .catch(() => {
-       setUpcoming([
-         { label: "DSA Practice", time: "Today" },
-         { label: "Java Revision", time: "Today" },
-       ]);
-     });
- }, [user]);
+        if (upcomingTasks.length > 0) {
+          setUpcoming(upcomingTasks);
+        } else {
+          setUpcoming([
+            { label: "DSA Practice", time: "Today" },
+            { label: "Java Revision", time: "Today" },
+          ]);
+        }
+      })
+      .catch(() => {
+        setUpcoming([
+          { label: "DSA Practice", time: "Today" },
+          { label: "Java Revision", time: "Today" },
+        ]);
+      });
+  }, [user]);
 
 
 
@@ -833,9 +832,8 @@ function RightPanel() {
           {[40, 70, 45, 90, 60, 30, 50].map((h, i) => (
             <div
               key={i}
-              className={`flex-1 rounded-sm ${
-                i === 3 ? "bg-orange-500" : "bg-white/10"
-              }`}
+              className={`flex-1 rounded-sm ${i === 3 ? "bg-orange-500" : "bg-white/10"
+                }`}
               style={{ height: `${h}%` }}
             />
           ))}
