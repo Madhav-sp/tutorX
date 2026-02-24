@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 
 import {
@@ -10,7 +10,6 @@ import {
   MessageSquare,
   ArrowLeft,
   Plus,
-  Search,
   Home,
   BarChart3,
   Target,
@@ -19,19 +18,27 @@ import {
   Bell,
   Sparkles,
   Info,
+  Clock,
+  ChevronRight,
+  Send,
+  Trophy,
+  Search,
+  Maximize2,
+  Minimize2,
 } from "lucide-react";
-import { useClerk, UserButton } from "@clerk/nextjs";
+import { useClerk, UserButton, useUser } from "@clerk/nextjs";
 import ReactMarkdown from "react-markdown";
 import WeatherWidget from "../components/WeatherWidget";
 
 export default function NotebookPage() {
   const [notebooks, setNotebooks] = useState([]);
   const [selectedNotebook, setSelectedNotebook] = useState(null);
-  const [activeView, setActiveView] = useState("summary");
+  const [activeView, setActiveView] = useState("chat"); // Default to chat in research hub
   const [selection, setSelection] = useState("");
   const [sectionExplanation, setSectionExplanation] = useState("");
   const [explaining, setExplaining] = useState(false);
   const [selectionBox, setSelectionBox] = useState(null);
+  const [isFocusMode, setIsFocusMode] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -47,7 +54,7 @@ export default function NotebookPage() {
       const rect = range.getBoundingClientRect();
       setSelection(text);
       setSelectionBox({
-        top: rect.top + window.scrollY - 40,
+        top: rect.top + window.scrollY - 45,
         left: rect.left + window.scrollX + rect.width / 2,
       });
     } else {
@@ -60,6 +67,7 @@ export default function NotebookPage() {
     setExplaining(true);
     setSectionExplanation("");
     setSelectionBox(null);
+    setActiveView("explanation"); // Switch to insights tab to show explanation
 
     try {
       const res = await fetch("/api/notebook/section-explain", {
@@ -72,243 +80,267 @@ export default function NotebookPage() {
       });
       const data = await res.json();
       setSectionExplanation(data.explanation);
-      setActiveView("explanation");
     } finally {
       setExplaining(false);
     }
   };
 
   return (
-    <div className="flex h-screen bg-[#0b0b0c] text-gray-300 font-sans">
-      <Sidebar activePage="/notebook" />
+    <div className="flex h-screen bg-[#0b0b0c] text-gray-300 font-sans selection:bg-orange-500/30">
+      <Sidebar activePage="/notebook" hidden={isFocusMode} />
 
       <div className="flex-1 flex flex-col overflow-hidden">
         <TopBar
           currentPage={selectedNotebook ? selectedNotebook.title : "Library"}
+          selectedNotebook={selectedNotebook}
+          onToggleFocus={() => setIsFocusMode(!isFocusMode)}
+          isFocusMode={isFocusMode}
         />
 
-        <main className="flex-1 overflow-hidden relative">
+        <main className="flex-1 overflow-hidden flex">
           {!selectedNotebook ? (
             /* ================= LIBRARY VIEW ================= */
-            <div className="h-full overflow-y-auto p-8 custom-scroll">
-              <div className="max-w-6xl mx-auto">
-                <header className="flex justify-between items-center mb-10">
-                  <div>
-                    <h1 className="text-3xl font-bold text-white tracking-tight">
-                      Notebook<span className="text-orange-500">LLM</span>
-                    </h1>
-                    <p className="text-gray-500 mt-1">
-                      Your personal AI research assistant
-                    </p>
-                  </div>
-
-                  <button
-                    onClick={() => router.push("/notebook/upload")}
-                    className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-black px-5 py-2.5 rounded-xl font-semibold transition shadow-lg shadow-orange-500/10"
-                  >
-                    <Plus size={18} /> New Notebook
-                  </button>
-                </header>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {notebooks.map((nb) => (
-                    <div
-                      key={nb._id}
-                      onClick={() => {
-                        setSelectedNotebook(nb);
-                        setActiveView("summary");
-                      }}
-                      className="group bg-[#111113] border border-white/5 p-6 rounded-3xl hover:border-orange-500/30 transition cursor-pointer"
-                    >
-                      <div className="h-12 w-12 bg-orange-500/10 rounded-xl flex items-center justify-center mb-4">
-                        <BookOpen className="text-orange-500" size={22} />
-                      </div>
-
-                      <h2 className="text-xl font-semibold text-gray-100 uppercase tracking-tight">
-                        {nb.title}
-                      </h2>
-
-                      <p className="text-gray-500 text-sm mt-2 line-clamp-2 leading-relaxed">
-                        {nb.summary ||
-                          "This notebook contains summarized insights."}
+            <div className="flex-1 flex overflow-hidden">
+              <div className="flex-1 overflow-y-auto p-12 custom-scroll">
+                <div className="max-w-5xl mx-auto">
+                  <header className="flex justify-between items-center mb-12">
+                    <div>
+                      <h1 className="text-3xl font-extrabold text-white tracking-tight">
+                        Notebook<span className="text-orange-500">LLM</span>
+                      </h1>
+                      <p className="text-gray-500 mt-1">
+                        High-performance AI research environment
                       </p>
-
-                      <div className="mt-6 text-[10px] uppercase tracking-widest text-gray-600 font-bold">
-                        Created {new Date(nb.createdAt).toLocaleDateString()}
-                      </div>
                     </div>
-                  ))}
+
+                    <button
+                      onClick={() => router.push("/notebook/upload")}
+                      className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-black px-6 py-3 rounded-2xl font-bold transition shadow-lg shadow-orange-500/10"
+                    >
+                      <Plus size={20} /> New Notebook
+                    </button>
+                  </header>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {notebooks.map((nb) => (
+                      <div
+                        key={nb._id}
+                        onClick={() => {
+                          setSelectedNotebook(nb);
+                          setActiveView("chat");
+                        }}
+                        className="group bg-[#111113] border border-white/5 p-7 rounded-[32px] hover:border-orange-500/30 transition-all cursor-pointer relative overflow-hidden"
+                      >
+                        <div className="h-12 w-12 bg-white/5 rounded-2xl flex items-center justify-center mb-6 text-orange-500 group-hover:scale-110 transition-transform">
+                          <BookOpen size={24} />
+                        </div>
+
+                        <h2 className="text-lg font-bold text-gray-100 uppercase tracking-tight mb-2">
+                          {nb.title}
+                        </h2>
+
+                        <p className="text-gray-500 text-sm line-clamp-2 leading-relaxed mb-6">
+                          {nb.summary || "Summarized insights from your research."}
+                        </p>
+
+                        <div className="flex items-center justify-between mt-auto pt-4 border-t border-white/5 uppercase text-[10px] font-black text-gray-600 tracking-widest">
+                          <div className="flex items-center gap-1.5">
+                            <Clock size={12} />
+                            {new Date(nb.createdAt).toLocaleDateString()}
+                          </div>
+                          <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
+                        </div>
+                      </div>
+                    ))}
+
+                    {notebooks.length === 0 && (
+                      <div className="col-span-full py-24 text-center border border-dashed border-white/5 rounded-[40px]">
+                        <BookOpen size={48} className="mx-auto mb-4 opacity-20" />
+                        <p className="text-gray-500">Your library is empty. Click "New Notebook" to begin.</p>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
+              <RightPanel />
             </div>
           ) : (
-            /* ================= WORKSPACE VIEW ================= */
-            <div className="flex h-full overflow-hidden">
-              {/* LEFT SUB SIDEBAR */}
-              <aside className="w-64 border-r border-white/5 bg-[#0e0e10] p-4 flex flex-col gap-2">
-                <button
-                  onClick={() => setSelectedNotebook(null)}
-                  className="flex items-center gap-2 px-4 py-2 text-xs text-gray-500 hover:text-orange-400 transition mb-4"
-                >
-                  <ArrowLeft size={14} /> Back to Library
-                </button>
+            /* ================= WORKSPACE VIEW (TRIPLE PANE) ================= */
+            <div className="flex h-full w-full overflow-hidden bg-[#070708]">
+              {/* 1. LEFT PANEL: NAVIGATOR */}
+              {!isFocusMode && (
+                <aside className="w-64 border-r border-white/5 bg-[#0e0e10]/50 backdrop-blur-xl p-6 flex flex-col gap-2 animate-in slide-in-from-left-4 duration-300">
+                  <button
+                    onClick={() => setSelectedNotebook(null)}
+                    className="flex items-center gap-2 px-3 py-2 text-[10px] font-black text-gray-500 hover:text-orange-400 transition mb-6 uppercase tracking-widest group"
+                  >
+                    <ArrowLeft size={14} className="group-hover:-translate-x-1 transition-transform" />
+                    Library
+                  </button>
 
-                <p className="text-[10px] font-bold text-gray-600 uppercase tracking-widest px-4 mb-2">
-                  Notebook Guide
-                </p>
+                  <div className="space-y-1">
+                    <p className="text-[10px] font-black text-gray-700 uppercase tracking-[0.2em] px-4 mb-4">
+                      Research Guide
+                    </p>
+                    <SidebarItem
+                      icon={<MessageSquare size={18} />}
+                      label="Research Hub"
+                      active={activeView === "chat"}
+                      onClick={() => setActiveView("chat")}
+                    />
+                    <SidebarItem
+                      icon={<Zap size={18} />}
+                      label="Key Summary"
+                      active={activeView === "summary"}
+                      onClick={() => setActiveView("summary")}
+                    />
+                    <SidebarItem
+                      icon={<Layers size={18} />}
+                      label="Deep Insights"
+                      active={activeView === "explanation"}
+                      onClick={() => setActiveView("explanation")}
+                    />
+                    <SidebarItem
+                      icon={<Sparkles size={18} />}
+                      label="Knowledge Cards"
+                      active={activeView === "flashcards"}
+                      onClick={() => setActiveView("flashcards")}
+                    />
+                  </div>
 
-                <SidebarItem
-                  icon={<FileText size={18} />}
-                  label="Summary"
-                  active={activeView === "summary"}
-                  onClick={() => setActiveView("summary")}
-                />
-                <SidebarItem
-                  icon={<Layers size={18} />}
-                  label="Full Notes"
-                  active={activeView === "notes"}
-                  onClick={() => setActiveView("notes")}
-                />
-                <SidebarItem
-                  icon={<Zap size={18} />}
-                  label="Explanation"
-                  active={activeView === "explanation"}
-                  onClick={() => setActiveView("explanation")}
-                />
-                <SidebarItem
-                  icon={<BookOpen size={18} />}
-                  label="Flashcards"
-                  active={activeView === "flashcards"}
-                  onClick={() => setActiveView("flashcards")}
-                />
-              </aside>
-
-              {/* MAIN CONTENT - SIDE BY SIDE */}
-              <section className="flex-1 overflow-hidden grid grid-cols-2 bg-[#0b0b0c]">
-                {/* SOURCE COLUMN */}
-                <div
-                  className="overflow-y-auto p-12 border-r border-white/5 custom-scroll relative"
-                  onMouseUp={handleTextSelection}
-                >
-                  <div className="max-w-[500px] mx-auto">
-                    <div className="flex items-center justify-between mb-8">
-                      <h2 className="text-xl font-semibold text-white flex items-center gap-2">
-                        <FileText size={18} className="text-blue-400" />
-                        Source Notes
-                      </h2>
-                      <span className="text-[10px] text-gray-600 font-bold uppercase tracking-widest">
-                        Raw Content
-                      </span>
+                  <div className="mt-auto p-5 rounded-3xl bg-orange-500/5 border border-orange-500/10">
+                    <div className="flex items-center gap-2 text-orange-500 text-[10px] font-black uppercase mb-2">
+                      <Sparkles size={12} />
+                      AI Assistant
                     </div>
+                    <p className="text-[11px] text-gray-500 leading-relaxed">
+                      Highlight any text in the source to trigger deep-dive reasoning.
+                    </p>
+                  </div>
+                </aside>
+              )}
 
-                    <div className="whitespace-pre-wrap text-gray-400 bg-[#0f0f11] p-8 rounded-2xl border border-white/10 leading-relaxed text-[15px] select-text">
+              {/* 2. MIDDLE PANEL: THE SOURCE CONTENT */}
+              <section
+                className="flex-1 overflow-y-auto p-12 custom-scroll relative bg-[#070708] border-r border-white/5"
+                onMouseUp={handleTextSelection}
+              >
+                <div className="max-w-2xl mx-auto">
+                  <div className="flex items-center justify-between mb-10">
+                    <div>
+                      <span className="text-[10px] text-orange-500 font-black uppercase tracking-[0.3em] mb-1">Source</span>
+                      <h2 className="text-2xl font-black text-white tracking-tight uppercase">Document Notes</h2>
+                    </div>
+                    <div className="px-3 py-1 rounded-full bg-white/5 border border-white/5 text-[9px] font-black text-gray-500">
+                      V1.0
+                    </div>
+                  </div>
+
+                  <div className="relative group">
+                    <div className="absolute -inset-1 bg-gradient-to-r from-orange-500/10 to-transparent rounded-[2rem] blur opacity-20 pointer-events-none"></div>
+                    <div className="relative whitespace-pre-wrap text-gray-300 bg-[#111113]/50 p-10 rounded-[2.5rem] border border-white/5 leading-[1.8] text-[16px] shadow-2xl select-text">
                       {selectedNotebook.notes}
                     </div>
                   </div>
-
-                  {/* FLOATING ACTION */}
-                  {selectionBox && (
-                    <button
-                      onClick={explainSelection}
-                      style={{
-                        position: "absolute",
-                        top: selectionBox.top,
-                        left: selectionBox.left,
-                        transform: "translateX(-50%)",
-                      }}
-                      className="z-50 bg-orange-500 text-black px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-xl animate-in fade-in slide-in-from-bottom-2 duration-200"
-                    >
-                      <Sparkles size={14} /> Explain This
-                    </button>
-                  )}
                 </div>
 
-                {/* AI INSIGHTS COLUMN */}
-                <div className="overflow-y-auto p-12 bg-[#0d0d0f] custom-scroll">
-                  <div className="max-w-[500px] mx-auto">
-                    {/* TABS */}
-                    <div className="flex gap-4 mb-10 border-b border-white/5 pb-2">
-                      <button
-                        onClick={() => setActiveView("summary")}
-                        className={`text-xs font-bold uppercase tracking-widest pb-2 transition ${activeView === "summary" ? "text-orange-500 border-b-2 border-orange-500" : "text-gray-600 hover:text-gray-400"}`}
-                      >
-                        Summary
-                      </button>
-                      <button
-                        onClick={() => setActiveView("explanation")}
-                        className={`text-xs font-bold uppercase tracking-widest pb-2 transition ${activeView === "explanation" ? "text-orange-500 border-b-2 border-orange-500" : "text-gray-600 hover:text-gray-400"}`}
-                      >
-                        Deep Dive
-                      </button>
-                      <button
-                        onClick={() => setActiveView("flashcards")}
-                        className={`text-xs font-bold uppercase tracking-widest pb-2 transition ${activeView === "flashcards" ? "text-orange-500 border-b-2 border-orange-500" : "text-gray-600 hover:text-gray-400"}`}
-                      >
-                        Practice
-                      </button>
-                    </div>
-
-                    {explaining && (
-                      <div className="py-20 text-center animate-pulse">
-                        <Sparkles className="w-12 h-12 text-orange-500 mx-auto mb-4" />
-                        <p className="text-orange-500 font-medium">AI is distilling insights...</p>
-                      </div>
-                    )}
-
-                    {!explaining && activeView === "summary" && (
-                      <div className="animate-in fade-in slide-in-from-right-4 duration-500">
-                        <div className="prose prose-invert max-w-none prose-orange text-[16px] leading-relaxed text-gray-300">
-                          <ReactMarkdown>{selectedNotebook.summary}</ReactMarkdown>
-                        </div>
-                      </div>
-                    )}
-
-                    {!explaining && activeView === "explanation" && (
-                      <div className="animate-in fade-in slide-in-from-right-4 duration-500">
-                        {sectionExplanation || selectedNotebook.easyExplanation ? (
-                          <div className="prose prose-invert max-w-none prose-orange text-[16px] leading-relaxed text-gray-300">
-                            <ReactMarkdown>{sectionExplanation || selectedNotebook.easyExplanation}</ReactMarkdown>
-                          </div>
-                        ) : (
-                          <div className="text-center py-20 text-gray-600">
-                            <Info size={40} className="mx-auto mb-4 opacity-20" />
-                            <p>Select text on the left to get a detailed AI explanation.</p>
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {!explaining && activeView === "flashcards" && (
-                      <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-500">
-                        {selectedNotebook.flashcards?.map((c, i) => (
-                          <div
-                            key={i}
-                            className="bg-[#111113] p-6 rounded-2xl border border-white/5 hover:border-orange-500/20 transition-colors"
-                          >
-                            <p className="text-orange-500 text-[10px] font-bold uppercase tracking-widest mb-2">
-                              Question
-                            </p>
-                            <p className="text-lg text-white mb-4 line-height-relaxed">
-                              {c.question}
-                            </p>
-                            <div className="h-px bg-white/5 mb-4" />
-                            <p className="text-orange-500 text-[10px] font-bold uppercase tracking-widest mb-2">
-                              Answer
-                            </p>
-                            <p className="text-gray-400 leading-relaxed text-sm">
-                              {c.answer}
-                            </p>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
+                {/* FLOATING ACTION */}
+                {selectionBox && (
+                  <button
+                    onClick={explainSelection}
+                    style={{
+                      position: "absolute",
+                      top: selectionBox.top,
+                      left: selectionBox.left,
+                      transform: "translateX(-50%)",
+                    }}
+                    className="z-50 bg-white text-black px-4 py-2 rounded-xl text-[10px] font-black flex items-center gap-2 shadow-[0_10px_40px_rgba(0,0,0,0.5)] border border-white hover:scale-105 active:scale-95 transition-all animate-in zoom-in-90 duration-300 uppercase"
+                  >
+                    <Sparkles size={14} className="text-orange-500" /> Explain
+                  </button>
+                )}
               </section>
 
-              {/* CHAT */}
-              <aside className="w-[400px] border-l border-white/5 bg-[#0e0e10]">
-                <ChatPanel notes={selectedNotebook.notes} />
+              {/* 3. RIGHT PANEL: THE RESEARCH HUB (Chat, Info, Flashcards) */}
+              <aside className="w-[480px] bg-[#0b0b0c] flex flex-col shadow-2xl relative z-10">
+                {/* HUB TABS */}
+                <div className="p-4 border-b border-white/5 flex gap-2">
+                  <button
+                    onClick={() => setActiveView("chat")}
+                    className={`flex-1 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeView === "chat" ? "bg-white text-black" : "text-gray-500 hover:text-gray-300 hover:bg-white/5"}`}
+                  >
+                    Assistant
+                  </button>
+                  <button
+                    onClick={() => setActiveView("summary")}
+                    className={`flex-1 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeView === "summary" ? "bg-white text-black" : "text-gray-500 hover:text-gray-300 hover:bg-white/5"}`}
+                  >
+                    Summary
+                  </button>
+                  <button
+                    onClick={() => setActiveView("flashcards")}
+                    className={`flex-1 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeView === "flashcards" ? "bg-white text-black" : "text-gray-500 hover:text-gray-300 hover:bg-white/5"}`}
+                  >
+                    Review
+                  </button>
+                </div>
+
+                <div className="flex-1 overflow-y-auto custom-scroll p-8">
+                  {explaining && (
+                    <div className="py-32 text-center animate-in fade-in duration-500">
+                      <div className="relative w-16 h-16 mx-auto mb-6">
+                        <div className="absolute inset-0 border-4 border-orange-500/20 border-t-orange-500 rounded-full animate-spin" />
+                        <Sparkles className="absolute inset-0 m-auto w-6 h-6 text-orange-500 animate-pulse" />
+                      </div>
+                      <h3 className="text-lg font-bold text-white mb-2 tracking-tight">AI REASONING</h3>
+                      <p className="text-gray-500 text-xs uppercase tracking-widest">Synthesizing insights...</p>
+                    </div>
+                  )}
+
+                  {!explaining && activeView === "chat" && (
+                    <ChatPanel notes={selectedNotebook.notes} />
+                  )}
+
+                  {!explaining && activeView === "summary" && (
+                    <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+                      <h3 className="text-[10px] font-black text-orange-500 uppercase tracking-[0.3em] mb-8">Executive Summary</h3>
+                      <div className="prose prose-invert max-w-none prose-orange text-[15px] leading-relaxed text-gray-300">
+                        <ReactMarkdown>{selectedNotebook.summary}</ReactMarkdown>
+                      </div>
+                    </div>
+                  )}
+
+                  {!explaining && activeView === "explanation" && (
+                    <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+                      <h3 className="text-[10px] font-black text-orange-500 uppercase tracking-[0.3em] mb-8">Generated Insight</h3>
+                      {sectionExplanation || selectedNotebook.easyExplanation ? (
+                        <div className="prose prose-invert max-w-none prose-orange text-[15px] leading-relaxed text-gray-300">
+                          <ReactMarkdown>{sectionExplanation || selectedNotebook.easyExplanation}</ReactMarkdown>
+                        </div>
+                      ) : (
+                        <div className="text-center py-32 bg-white/[0.02] border border-dashed border-white/5 rounded-[40px]">
+                          <Info size={40} className="mx-auto mb-4 text-orange-500 opacity-20" />
+                          <p className="text-gray-500 text-xs px-10">Select source text to generate explanations here.</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {!explaining && activeView === "flashcards" && (
+                    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                      <h3 className="text-[10px] font-black text-orange-500 uppercase tracking-[0.3em] mb-8">Knowledge Review</h3>
+                      {selectedNotebook.flashcards?.map((c, i) => (
+                        <div key={i} className="bg-[#111113] p-8 rounded-[32px] border border-white/5 shadow-xl">
+                          <p className="text-[9px] font-black text-orange-500 uppercase tracking-[0.2em] mb-4">Challenge {i + 1}</p>
+                          <p className="text-lg font-bold text-white leading-tight mb-8">{c.question}</p>
+                          <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/5 text-sm text-gray-400 leading-relaxed italic">
+                            {c.answer}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </aside>
             </div>
           )}
@@ -320,44 +352,45 @@ export default function NotebookPage() {
 
 /* ================= SHARED COMPONENTS ================= */
 
-function Sidebar({ activePage }) {
-  const { signOut } = useClerk();
+function Sidebar({ activePage, hidden }) {
   const router = useRouter();
+  const { signOut } = useClerk();
+
+  if (hidden) return null;
 
   const navItems = [
-    { icon: Home, address: "/" },
-    { icon: BookOpen, address: "/notebook" },
-    { icon: BarChart3, address: "/analytics" },
-    { icon: Target, address: "/goals" },
-    { icon: Settings, address: "/settings" },
+    { icon: Home, address: "/", label: "Home" },
+    { icon: BookOpen, address: "/notebook", label: "Library" },
+    { icon: BarChart3, address: "/analytics", label: "Stats" },
+    { icon: Target, address: "/goals", label: "Goals" },
+    { icon: Settings, address: "/settings", label: "Settings" },
   ];
 
   return (
-    <aside className="w-20 bg-[#0e0e10] border-r border-white/5 flex flex-col items-center py-8 justify-between">
+    <aside className="w-20 bg-[#0e0e10] border-r border-white/5 flex flex-col items-center py-8 justify-between z-50">
       <div className="flex flex-col items-center gap-10">
-        <div className="w-10 h-10 bg-orange-500 rounded-xl flex items-center justify-center">
+        <div className="w-10 h-10 bg-orange-500 rounded-xl flex items-center justify-center shadow-lg">
           <Zap className="w-5 h-5 text-black" />
         </div>
-
         <nav className="flex flex-col gap-4">
           {navItems.map((item, i) => (
             <button
               key={i}
               onClick={() => router.push(item.address)}
-              className={`p-3 rounded-xl transition ${activePage === item.address
-                  ? "bg-white/10 text-orange-400"
-                  : "text-gray-500 hover:text-gray-200 hover:bg-white/5"
+              className={`p-3 rounded-xl transition-all ${activePage === item.address
+                ? "bg-white/10 text-orange-400"
+                : "text-gray-500 hover:text-gray-200 hover:bg-white/5"
                 }`}
+              title={item.label}
             >
               <item.icon className="w-5 h-5" />
             </button>
           ))}
         </nav>
       </div>
-
       <button
         onClick={() => signOut({ redirectUrl: "/" })}
-        className="p-3 text-gray-600 hover:text-red-400"
+        className="p-3 text-gray-600 hover:text-red-400 transition-colors"
       >
         <LogOut className="w-5 h-5" />
       </button>
@@ -365,18 +398,39 @@ function Sidebar({ activePage }) {
   );
 }
 
-function TopBar({ currentPage }) {
+function TopBar({ currentPage, selectedNotebook, onToggleFocus, isFocusMode }) {
   return (
-    <header className="h-20 bg-[#0b0b0c] border-b border-white/5 flex items-center justify-between px-8">
-      <h1 className="text-sm font-medium text-gray-200 uppercase">
-        Console <span className="text-gray-500">/ {currentPage}</span>
-      </h1>
+    <header className="h-20 bg-[#0b0b0c] border-b border-white/5 flex items-center justify-between px-8 z-40">
+      <div className="flex items-center gap-6">
+        <h1 className="text-sm font-medium text-gray-200 uppercase tracking-widest">
+          Console <span className="text-gray-600">/ {currentPage}</span>
+        </h1>
+
+        {!selectedNotebook ? (
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+            <input
+              placeholder="Search library…"
+              className="bg-[#111113] border border-white/5 rounded-lg pl-10 pr-4 py-2 text-xs w-64 text-white
+              placeholder:text-gray-600 focus:outline-none focus:ring-1 focus:ring-orange-500/30"
+            />
+          </div>
+        ) : (
+          <button
+            onClick={onToggleFocus}
+            className={`flex items-center gap-2 px-4 py-1.5 rounded-lg border border-white/5 text-[9px] font-black uppercase tracking-widest transition-all ${isFocusMode ? "bg-white text-black border-white" : "text-gray-500 hover:text-white"}`}
+          >
+            {isFocusMode ? <Minimize2 size={12} /> : <Maximize2 size={12} />}
+            {isFocusMode ? "Standard View" : "Full Focus"}
+          </button>
+        )}
+      </div>
 
       <div className="flex items-center gap-5">
-        <Bell className="text-gray-400" />
-        <div className="flex items-center gap-3 bg-white/5 border border-white/5 rounded-full px-4 py-1">
+        <Bell className="w-5 h-5 text-gray-500 cursor-pointer hover:text-gray-300" />
+        <div className="flex items-center gap-3 bg-white/5 border border-white/5 rounded-full px-4 py-1.5">
           <WeatherWidget />
-          <UserButton />
+          <UserButton appearance={{ elements: { userButtonAvatarBox: "w-6 h-6" } }} />
         </div>
       </div>
     </header>
@@ -387,26 +441,96 @@ function SidebarItem({ icon, label, active, onClick }) {
   return (
     <button
       onClick={onClick}
-      className={`flex items-center gap-3 px-4 py-3 rounded-xl transition ${active
-          ? "bg-orange-500 text-black font-semibold"
-          : "text-gray-400 hover:bg-white/5 hover:text-white"
+      className={`group flex items-center gap-4 px-5 py-4 rounded-3xl transition-all duration-300 relative overflow-hidden ${active
+        ? "bg-white text-black font-extrabold shadow-xl shadow-white/5 border-white"
+        : "text-gray-500 hover:bg-white/[0.03] hover:text-white"
         }`}
     >
-      {icon}
-      <span className="text-sm">{label}</span>
+      <div className={`transition-colors ${active ? "text-orange-600" : "text-gray-500 group-hover:text-orange-400"}`}>
+        {icon}
+      </div>
+      <span className="text-xs uppercase tracking-widest font-black">{label}</span>
+      {active && (
+        <div className="absolute right-4 top-1/2 -translate-y-1/2 w-1 h-1 bg-orange-500 rounded-full" />
+      )}
     </button>
+  );
+}
+
+function RightPanel() {
+  const { user } = useUser();
+  const [upcoming, setUpcoming] = useState([]);
+
+  useEffect(() => {
+    if (!user) return;
+    fetch("/api/goals", { headers: { "x-user-id": user.id } })
+      .then((res) => res.json())
+      .then((data) => {
+        setUpcoming((data || []).filter((t) => !t.completed).slice(0, 2).map((t) => ({ label: t.text, time: "Today" })));
+      })
+      .catch(() => {
+        setUpcoming([{ label: "Review Notebooks", time: "Today" }, { label: "Weekly Goals", time: "Today" }]);
+      });
+  }, [user]);
+
+  return (
+    <aside className="w-80 bg-[#0e0e10] border-l border-white/5 p-8 space-y-10 animate-in slide-in-from-right-4 duration-500">
+      <div>
+        <h3 className="text-[10px] uppercase tracking-[0.2em] font-black text-gray-500 mb-6">Learning Activity</h3>
+        <div className="flex items-end gap-1.5 h-32">
+          {[40, 70, 45, 90, 60, 30, 50].map((h, i) => (
+            <div key={i} className={`flex-1 rounded-sm ${i === 3 ? "bg-orange-500" : "bg-white/5"}`} style={{ height: `${h}%` }} />
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <h3 className="text-[10px] uppercase tracking-[0.2em] font-black text-gray-500 mb-6">Up Next</h3>
+        <div className="space-y-3">
+          {upcoming.map((e, i) => (
+            <div key={i} className="flex items-center gap-4 p-4 bg-white/5 border border-white/5 rounded-2xl group hover:border-orange-500/20 transition-colors">
+              <div className="w-9 h-9 rounded-xl bg-white/5 flex items-center justify-center group-hover:bg-orange-500/10">
+                <Trophy className="w-4 h-4 text-orange-500" />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-gray-200">{e.label}</p>
+                <p className="text-[10px] text-gray-500 uppercase font-black">{e.time}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="p-7 rounded-[32px] bg-[#111113] border border-orange-500/20 shadow-2xl relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-24 h-24 bg-orange-500/5 blur-3xl" />
+        <p className="text-[9px] font-black uppercase text-orange-500 mb-2 tracking-[0.2em]">Upgrade Now</p>
+        <p className="text-lg font-bold text-white mb-6 leading-tight">Unlock AI Deep-Analytic Engine</p>
+        <button className="w-full bg-white text-black py-3 rounded-xl text-xs font-black uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all">
+          Elevate
+        </button>
+      </div>
+    </aside>
   );
 }
 
 function ChatPanel({ notes }) {
   const [question, setQuestion] = useState("");
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessages] = useState([
+    { role: "assistant", text: "Ready to assist. I've indexed your document—what specifically shall we investigate?" }
+  ]);
   const [loading, setLoading] = useState(false);
+  const scrollRef = useRef(null);
 
-  const ask = async () => {
-    if (!question.trim()) return;
-    setMessages((prev) => [...prev, { role: "user", text: question }]);
-    const q = question;
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [messages, loading]);
+
+  const ask = async (customQ) => {
+    const q = customQ || question;
+    if (!q.trim()) return;
+    setMessages((prev) => [...prev, { role: "user", text: q }]);
     setQuestion("");
     setLoading(true);
 
@@ -417,52 +541,45 @@ function ChatPanel({ notes }) {
         body: JSON.stringify({ question: q, notes }),
       });
       const data = await res.json();
-      setMessages((prev) => [
-        ...prev,
-        { role: "assistant", text: data.answer },
-      ]);
+      setMessages((prev) => [...prev, { role: "assistant", text: data.answer }]);
+    } catch {
+      setMessages((prev) => [...prev, { role: "assistant", text: "Network error. Please retry." }]);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="p-4 border-b border-white/5 flex items-center gap-2">
-        <MessageSquare size={18} className="text-orange-500" />
-        <span className="font-semibold text-sm">AI Notebook Guide</span>
-      </div>
-
-      <div className="flex-1 overflow-y-auto p-4 space-y-6 custom-scroll">
+    <div className="flex flex-col h-full animate-in fade-in duration-500">
+      <div className="flex-1 space-y-8 mb-8">
         {messages.map((m, i) => (
-          <div
-            key={i}
-            className={`flex ${m.role === "user" ? "justify-end" : "justify-start"
-              }`}
-          >
-            <div
-              className={`max-w-[85%] p-4 rounded-2xl text-sm ${m.role === "user"
-                  ? "bg-orange-500 text-black"
-                  : "bg-white/5 text-gray-300 border border-white/5"
-                }`}
-            >
+          <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+            <div className={`max-w-[90%] p-6 rounded-[2rem] text-[14px] leading-relaxed shadow-xl ${m.role === "user" ? "bg-white text-black font-bold" : "bg-[#111113] text-gray-300 border border-white/5"}`}>
               {m.text}
             </div>
           </div>
         ))}
         {loading && (
-          <div className="text-orange-500 text-xs">AI is thinking…</div>
+          <div className="flex items-center gap-2 text-orange-500 text-[10px] font-black uppercase animate-pulse">
+            <Sparkles size={14} /> AI Engine Active...
+          </div>
         )}
       </div>
 
-      <div className="p-4">
+      <div className="relative group mt-auto pt-4">
         <input
           value={question}
           onChange={(e) => setQuestion(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && ask()}
-          placeholder="Ask your notebook..."
-          className="w-full bg-[#141416] border border-white/10 px-4 py-3 rounded-xl text-white"
+          placeholder="Command Assistant..."
+          className="w-full bg-[#111113] border border-white/10 px-6 py-5 rounded-[2rem] text-white focus:outline-none focus:border-orange-500/40 transition-all font-medium text-sm"
         />
+        <button
+          onClick={() => ask()}
+          className="absolute right-2 top-[calc(50%+8px)] -translate-y-1/2 w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center text-black hover:scale-105 active:scale-95 transition-all shadow-xl shadow-orange-500/20"
+        >
+          <Send size={18} />
+        </button>
       </div>
     </div>
   );
