@@ -58,6 +58,7 @@ STRICT PARSING RULES:
 - In Python: \`import json; try: input_data = json.loads(str) except: input_data = str\`
 - In Java: Check if the string starts with '[' before parsing as an array, otherwise treat as a String.
 - THE RUNNER LOGIC MUST EXPLICITLY PRINT THE RESULT TO STDOUT.
+- THE STARTER CODE MUST BE AN EMPTY SKELETON ONLY. DO NOT PROVIDE THE SOLUTION, ONLY THE METHOD SIGNATURE AND CLASS STRUCTURE.
 `;
 
   try {

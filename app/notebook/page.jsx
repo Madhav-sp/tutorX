@@ -25,6 +25,9 @@ import {
   Search,
   Maximize2,
   Minimize2,
+  Volume2,
+  Globe,
+  Download,
 } from "lucide-react";
 import { useUser } from "@clerk/nextjs";
 import ReactMarkdown from "react-markdown";
@@ -87,15 +90,27 @@ export default function NotebookPage() {
     }
   };
 
+  const handleDownloadPDF = () => {
+    // Elegant way to trigger PDF download via browser print
+    const originalTitle = document.title;
+    document.title = `Research_Notes_${selectedNotebook?.title || "Notebook"}`;
+    window.print();
+    document.title = originalTitle;
+  };
+
   return (
     <div className="flex h-screen bg-[#0b0b0c] text-gray-300 font-sans selection:bg-orange-500/30">
-      <Sidebar hidden={isFocusMode} />
+      <div className="no-print">
+        <Sidebar hidden={isFocusMode} />
+      </div>
 
       <div className="flex-1 flex flex-col overflow-hidden">
-        <TopBar
-          currentPage={selectedNotebook ? selectedNotebook.title : "Library"}
-          showSearch={!selectedNotebook}
-        />
+        <div className="no-print">
+          <TopBar
+            currentPage={selectedNotebook ? selectedNotebook.title : "Library"}
+            showSearch={!selectedNotebook}
+          />
+        </div>
 
         <main className="flex-1 overflow-hidden flex">
           {!selectedNotebook ? (
@@ -169,7 +184,7 @@ export default function NotebookPage() {
             <div className="flex h-full w-full overflow-hidden bg-[#070708]">
               {/* 1. LEFT PANEL: NAVIGATOR */}
               {!isFocusMode && (
-                <aside className="w-64 border-r border-white/5 bg-[#0e0e10]/50 backdrop-blur-xl p-6 flex flex-col gap-2 animate-in slide-in-from-left-4 duration-300">
+                <aside className="w-64 border-r border-white/5 bg-[#0e0e10]/50 backdrop-blur-xl p-6 flex flex-col gap-2 animate-in slide-in-from-left-4 duration-300 no-print">
                   <div className="flex items-center justify-between mb-6">
                     <button
                       onClick={() => setSelectedNotebook(null)}
@@ -241,15 +256,23 @@ export default function NotebookPage() {
                       <span className="text-[10px] text-orange-500 font-black uppercase tracking-[0.3em] mb-1">Source</span>
                       <h2 className="text-2xl font-black text-white tracking-tight uppercase">Document Notes</h2>
                     </div>
-                    <div className="px-3 py-1 rounded-full bg-white/5 border border-white/5 text-[9px] font-black text-gray-500">
-                      V1.0
+                    <div className="flex items-center gap-3 no-print">
+                      <button 
+                        onClick={handleDownloadPDF}
+                        className="flex items-center gap-2 px-4 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-black text-[10px] font-black uppercase tracking-widest transition-all shadow-lg shadow-orange-500/10"
+                      >
+                        <Download size={14} /> Export PDF
+                      </button>
+                      <div className="px-3 py-1 rounded-full bg-white/5 border border-white/5 text-[9px] font-black text-gray-500">
+                        V1.0
+                      </div>
                     </div>
                   </div>
 
-                  <div className="relative group">
-                    <div className="absolute -inset-1 bg-gradient-to-r from-orange-500/10 to-transparent rounded-[2rem] blur opacity-20 pointer-events-none"></div>
-                    <div className="relative whitespace-pre-wrap text-gray-300 bg-[#111113]/50 p-10 rounded-[2.5rem] border border-white/5 leading-[1.8] text-[16px] shadow-2xl select-text">
-                      {selectedNotebook.notes}
+                  <div className="relative group print-content">
+                    <div className="absolute -inset-1 bg-gradient-to-r from-orange-500/10 to-transparent rounded-[2rem] blur opacity-20 pointer-events-none no-print"></div>
+                    <div className="relative prose prose-invert prose-orange max-w-none prose-p:leading-[1.8] prose-p:text-[16px] prose-headings:text-white prose-headings:font-black prose-headings:tracking-tight bg-[#111113]/50 p-10 rounded-[2.5rem] border border-white/5 shadow-2xl select-text">
+                      <ReactMarkdown>{selectedNotebook.notes}</ReactMarkdown>
                     </div>
                   </div>
                 </div>
@@ -272,7 +295,7 @@ export default function NotebookPage() {
               </section>
 
               {/* 3. RIGHT PANEL: THE RESEARCH HUB (Chat, Info, Flashcards) */}
-              <aside className="w-[480px] bg-[#0b0b0c] flex flex-col shadow-2xl relative z-10">
+              <aside className="w-[480px] bg-[#0b0b0c] flex flex-col shadow-2xl relative z-10 no-print">
                 {/* HUB TABS */}
                 <div className="p-4 border-b border-white/5 flex gap-2">
                   <button
@@ -337,14 +360,24 @@ export default function NotebookPage() {
                   )}
 
                   {!explaining && activeView === "flashcards" && (
-                    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
-                      <h3 className="text-[10px] font-black text-orange-500 uppercase tracking-[0.3em] mb-8">Knowledge Review</h3>
+                    <div className="grid grid-cols-1 gap-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                      <h3 className="text-[10px] font-black text-orange-500 uppercase tracking-[0.3em] mb-4">Neural Knowledge Cards</h3>
                       {selectedNotebook.flashcards?.map((c, i) => (
-                        <div key={i} className="bg-[#111113] p-8 rounded-[32px] border border-white/5 shadow-xl">
-                          <p className="text-[9px] font-black text-orange-500 uppercase tracking-[0.2em] mb-4">Challenge {i + 1}</p>
-                          <p className="text-lg font-bold text-white leading-tight mb-8">{c.question}</p>
-                          <div className="p-6 rounded-2xl bg-white/[0.03] border border-white/5 text-sm text-gray-400 leading-relaxed italic">
-                            {c.answer}
+                        <div key={i} className="group perspective-1000">
+                          <div className="relative bg-[#111113] p-8 rounded-[32px] border border-white/5 shadow-xl transition-all duration-500 hover:border-orange-500/30 overflow-hidden">
+                            <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-20 transition-opacity">
+                              <Sparkles size={40} className="text-orange-500" />
+                            </div>
+                            <div className="relative z-10">
+                              <p className="text-[9px] font-black text-orange-500/60 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+                                <div className="w-1 h-1 rounded-full bg-orange-500" /> Card {i + 1}
+                              </p>
+                              <p className="text-xl font-black text-white leading-tight mb-8 group-hover:text-orange-100 transition-colors">{c.question}</p>
+                              <div className="p-6 rounded-2xl bg-orange-500/5 border border-orange-500/10 text-sm text-gray-300 leading-relaxed italic border-dashed group-hover:bg-orange-500/10 transition-colors">
+                                <span className="text-orange-500/50 mr-2 font-black tracking-tighter uppercase text-[10px]">Response:</span>
+                                {c.answer}
+                              </div>
+                            </div>
                           </div>
                         </div>
                       ))}
@@ -359,6 +392,7 @@ export default function NotebookPage() {
     </div>
   );
 }
+
 
 
 
@@ -441,9 +475,13 @@ function RightPanel() {
 function ChatPanel({ notes }) {
   const [question, setQuestion] = useState("");
   const [messages, setMessages] = useState([
-    { role: "assistant", text: "Ready to assist. I've indexed your document—what specifically shall we investigate?" }
+    {
+      role: "assistant",
+      text: "Ready to assist. I've indexed your document—what specifically shall we investigate?",
+    },
   ]);
   const [loading, setLoading] = useState(false);
+  const [translatingId, setTranslatingId] = useState(null);
   const scrollRef = useRef(null);
 
   useEffect(() => {
@@ -466,21 +504,92 @@ function ChatPanel({ notes }) {
         body: JSON.stringify({ question: q, notes }),
       });
       const data = await res.json();
-      setMessages((prev) => [...prev, { role: "assistant", text: data.answer }]);
+      setMessages((prev) => [...prev, { role: "assistant", text: data.answer, id: Date.now() }]);
     } catch {
-      setMessages((prev) => [...prev, { role: "assistant", text: "Network error. Please retry." }]);
+      setMessages((prev) => [
+        ...prev,
+        { role: "assistant", text: "Network error. Please retry." },
+      ]);
     } finally {
       setLoading(false);
     }
   };
 
+  const handleTranslate = async (msgId, text, lang) => {
+    setTranslatingId(`${msgId}-${lang}`);
+    try {
+      const res = await fetch("/api/translate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text, targetLanguage: lang }),
+      });
+      const data = await res.json();
+      if (data.translatedText) {
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === msgId ? { ...m, text: data.translatedText } : m
+          )
+        );
+      }
+    } catch (error) {
+      console.error("Translation Failed", error);
+    } finally {
+      setTranslatingId(null);
+    }
+  };
+
+  const handleSpeak = (text) => {
+    // Basic TTS using browser API
+    const utterance = new SpeechSynthesisUtterance(text);
+    window.speechSynthesis.cancel(); // Stop playing anything else
+    window.speechSynthesis.speak(utterance);
+  };
+
   return (
     <div className="flex flex-col h-full animate-in fade-in duration-500">
-      <div className="flex-1 space-y-8 mb-8">
+      <div className="flex-1 space-y-8 mb-8 overflow-y-auto custom-scroll pr-2" ref={scrollRef}>
         {messages.map((m, i) => (
-          <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
-            <div className={`max-w-[90%] p-6 rounded-[2rem] text-[14px] leading-relaxed shadow-xl ${m.role === "user" ? "bg-white text-black font-bold" : "bg-[#111113] text-gray-300 border border-white/5"}`}>
-              {m.text}
+          <div
+            key={i}
+            className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
+          >
+            <div
+              className={`max-w-[95%] p-6 rounded-[2rem] text-[14px] leading-relaxed shadow-xl ${
+                m.role === "user"
+                  ? "bg-white text-black font-bold"
+                  : "bg-[#111113] text-gray-300 border border-white/5"
+              }`}
+            >
+              {m.role === "assistant" ? (
+                <div className="prose prose-invert prose-orange max-w-none">
+                  <ReactMarkdown>{m.text}</ReactMarkdown>
+                  
+                  {/* ACTIONS */}
+                  <div className="mt-4 flex items-center gap-3 pt-4 border-t border-white/5">
+                    <button
+                      onClick={() => handleSpeak(m.text)}
+                      className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-gray-500 hover:text-white transition-all"
+                      title="Read Aloud"
+                    >
+                      <Volume2 size={14} />
+                    </button>
+                    <div className="flex items-center gap-1 ml-auto">
+                      {["Hindi", "Telugu"].map((lang) => (
+                        <button
+                          key={lang}
+                          disabled={translatingId === `${m.id}-${lang}`}
+                          onClick={() => handleTranslate(m.id, m.text, lang)}
+                          className="px-2.5 py-1 rounded-full bg-white/5 hover:bg-orange-500 hover:text-black text-[9px] font-black uppercase tracking-widest text-gray-500 transition-all disabled:opacity-50"
+                        >
+                          {translatingId === `${m.id}-${lang}` ? "..." : lang}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                m.text
+              )}
             </div>
           </div>
         ))}
@@ -491,13 +600,13 @@ function ChatPanel({ notes }) {
         )}
       </div>
 
-      <div className="relative group mt-auto pt-4">
+      <div className="relative group mt-auto pt-4 shadow-[0_-20px_40px_#0b0b0c]">
         <input
           value={question}
           onChange={(e) => setQuestion(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && ask()}
           placeholder="Command Assistant..."
-          className="w-full bg-[#111113] border border-white/10 px-6 py-5 rounded-[2rem] text-white focus:outline-none focus:border-orange-500/40 transition-all font-medium text-sm"
+          className="w-full bg-[#111113] border border-white/10 px-6 py-5 rounded-[2rem] text-white focus:outline-none focus:border-orange-500/40 transition-all font-medium text-sm pr-16"
         />
         <button
           onClick={() => ask()}

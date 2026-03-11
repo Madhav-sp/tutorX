@@ -136,6 +136,31 @@
   --font-mono: var(--font-geist-mono);
 }
 
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  body {
+    background: white !important;
+    color: black !important;
+  }
+  .print-header {
+    display: block !important;
+    font-size: 24pt;
+    margin-bottom: 30px;
+    border-bottom: 2px solid #eee;
+    padding-bottom: 10px;
+  }
+  .print-content {
+    display: block !important;
+    width: 100% !important;
+    padding: 20px !important;
+    font-size: 12pt !important;
+    line-height: 1.6 !important;
+    color: #333 !important;
+  }
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;

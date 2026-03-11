@@ -50,7 +50,7 @@ public class Main {
 }
     `;
   } else if (lang === "python") {
-    const pythonRunner = `
+    const pythonRunner = runnerLogic || `
 if __name__ == "__main__":
     import sys, json, inspect
     input_str = sys.stdin.read().strip()
@@ -86,7 +86,7 @@ if __name__ == "__main__":
     const funcMatch = code.match(/function\s+([a-zA-Z0-9_]+)\s*\(/);
     const funcName = funcMatch ? funcMatch[1] : "solution";
     
-    const jsRunner = `
+    const jsRunner = runnerLogic || `
 const fs = require('fs');
 try {
     const inputStr = fs.readFileSync(0, 'utf8').trim();

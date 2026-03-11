@@ -22,22 +22,29 @@ import OrangePlusButton from "../components/button";
 import { useUser } from "@clerk/nextjs";
 import Sidebar from "../components/Sidebar";
 import TopBar from "../components/TopBar";
+import JarvisAssistant from "../components/JarvisAssistant";
 /* ================= PAGE ================= */
 
 export default function DashboardPage() {
+  const [searchQuery, setSearchQuery] = useState("");
 
   return (
     <div className="flex h-screen bg-[#0b0b0c] text-gray-300 font-sans">
       <Sidebar />
 
       <div className="flex-1 flex flex-col overflow-hidden">
-        <TopBar currentPage="Dashboard" />
+        <TopBar 
+          currentPage="Dashboard" 
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+        />
 
         <div className="flex flex-1 overflow-hidden">
-          <MainContent />
+          <MainContent searchQuery={searchQuery} />
           <RightPanel />
         </div>
       </div>
+      <JarvisAssistant />
     </div>
   );
 }
@@ -363,7 +370,7 @@ export default function DashboardPage() {
 //     </main>
 //   );
 // }
-function MainContent() {
+function MainContent({ searchQuery }) {
   const router = useRouter();
   const { user } = useUser();
 
@@ -475,7 +482,11 @@ function MainContent() {
     fetchAllProgress();
   }, [user, courses]);
 
-  const visibleCourses = showAll ? courses : courses.slice(0, 2);
+  const filteredCourses = courses.filter(course =>
+    course.title.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const visibleCourses = showAll ? filteredCourses : filteredCourses.slice(0, 2);
 
   const difficultyStyle = (level) => {
     switch (level?.toLowerCase()) {
