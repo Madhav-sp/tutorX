@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import Course from "@/models/Course";
+import UserProgress from "@/models/UserProgress";
 import { auth } from "@clerk/nextjs/server";
 import Groq from "groq-sdk";
 
@@ -50,20 +51,60 @@ export async function POST(req) {
     }
 
     /* =========================
+       FETCH USER CONTEXT
+    ========================= */
+    const userProgress = await UserProgress.find({ userId }).populate("courseId").lean();
+    const progressSummary = userProgress.map(p => {
+        return `- Course: ${p.courseId?.title || 'Unknown'}, Progress: ${p.progressPercent}%`;
+    }).join("\n");
+
+    /* =========================
        AI PROMPT
     ========================= */
     const prompt = `
-Generate a high-quality, professional educational course on: "${title}".
+Act as a Senior Software Engineer and Expert Educator. Generate an exceptionally high-quality, professional, and comprehensive educational course on: "${title}".
+
 Description: ${description}
 Difficulty: ${difficulty}
 Category: ${category}
 Number of Chapters: ${chaptersCount}
 
-STRICT INSTRUCTIONS:
-1. Return ONLY a valid JSON object. No markdown, no pre-amble, no post-amble.
-2. Structure: { "chapters": [ { "chapterTitle": "string", "duration": "string", "topics": [ { "title": "string", "content": [ { "type": "heading"|"text"|"list"|"code"|"output", "text": "string", "items": ["string"], "language": "string", "code": "string" } ], "flashcards": [ { "question": "string", "answer": "string" } ], "quiz": [ { "question": "string", "options": ["string"], "correctAnswer": "string" } ] } ] } ] }
-3. Each chapter should have 3-5 topics for depth.
-4. Content must be detailed and educational.
+USER LEARNING CONTEXT:
+${progressSummary || "No previous courses found. This is a new learner."}
+
+STRICT CONTENT REQUIREMENTS:
+1. DEPTH: Each topic must be a "technical deep dive". Do NOT provide summaries. Provide detailed explanations (at least 3-5 sub-sections per topic).
+2. STRUCTURE: Every topic's "content" array must include:
+    - At least one "heading" for the topic overview.
+    - Multiple "text" blocks explaining concepts in depth (GeeksforGeeks/MDN style).
+    - At least one "code" block with a practical, real-world example.
+    - An "output" block showing the expected result of the code.
+    - A "list" block for "Best Practices" or "Common Use Cases".
+3. PEDAGOGY: Use professional terminology but explain it clearly. Relate new concepts to the USER LEARNING CONTEXT provided above.
+4. ENGAGEMENT: Ensure flashcards and quizzes are challenging and test actual understanding, not just rote memorization.
+
+JSON STRUCTURE:
+{
+  "chapters": [
+    {
+      "chapterTitle": "string",
+      "duration": "string",
+      "topics": [
+        {
+          "title": "string",
+          "content": [
+            { "type": "heading"|"text"|"list"|"code"|"output", "text": "string", "items": ["string"], "language": "string", "code": "string" }
+          ],
+          "flashcards": [ { "question": "string", "answer": "string" } ],
+          "quiz": [ { "question": "string", "options": ["string"], "correctAnswer": "string" } ]
+        }
+      ]
+    }
+  ]
+}
+
+STRICT OUTPUT RULE:
+Return ONLY the valid JSON object. No markdown, no pre-amble, no post-amble.
 `;
 
     const completion = await groq.chat.completions.create({

@@ -17,8 +17,10 @@ import {
   Star,
   Clock,
 } from "lucide-react";
-import { useClerk, UserButton, useUser } from "@clerk/nextjs";
+import { useUser } from "@clerk/nextjs";
 import WeatherWidget from "../components/WeatherWidget";
+import Sidebar from "../components/Sidebar";
+import TopBar from "../components/TopBar";
 
 /* ================= PAGE ================= */
 
@@ -85,7 +87,7 @@ export default function GoalsPage() {
       <Sidebar />
 
       <div className="flex-1 flex flex-col overflow-hidden">
-        <TopBar />
+        <TopBar currentPage="Goals" />
 
         <main className="flex-1 overflow-y-auto p-8 custom-scroll">
           <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -259,71 +261,4 @@ function RoadmapStep({ status, title, desc, icon }) {
   );
 }
 
-/* ================= SIDEBAR ================= */
 
-function Sidebar() {
-  const { signOut } = useClerk();
-  const router = useRouter();
-  const pathname = usePathname();
-
-  const navItems = [
-    { icon: Home, address: "/" },
-    { icon: BookOpen, address: "/notebook" },
-    { icon: BarChart3, address: "/analytics" },
-    { icon: Target, address: "/goals" },
-    { icon: Settings, address: "/settings" },
-  ];
-
-  return (
-    <aside className="w-20 bg-[#0e0e10] border-r border-white/5 flex flex-col items-center py-8 justify-between">
-      <div className="flex flex-col gap-10">
-        <div className="w-10 h-10 bg-orange-500 rounded-xl flex items-center justify-center">
-          <Zap className="w-5 h-5 text-black" />
-        </div>
-
-        <nav className="flex flex-col gap-4">
-          {navItems.map((item, i) => (
-            <button
-              key={i}
-              onClick={() => router.push(item.address)}
-              className={`p-3 rounded-xl ${
-                pathname === item.address
-                  ? "bg-white/10 text-orange-400"
-                  : "text-gray-500 hover:text-gray-200 hover:bg-white/5"
-              }`}
-            >
-              <item.icon className="w-5 h-5" />
-            </button>
-          ))}
-        </nav>
-      </div>
-
-      <button
-        onClick={() => signOut({ redirectUrl: "/" })}
-        className="p-3 text-gray-600 hover:text-red-400"
-      >
-        <LogOut className="w-5 h-5" />
-      </button>
-    </aside>
-  );
-}
-
-/* ================= TOP BAR ================= */
-
-function TopBar() {
-  return (
-    <header className="h-20 bg-[#0b0b0c] border-b border-white/5 flex items-center justify-between px-8">
-      <h1 className="text-sm font-medium tracking-wide text-gray-200 uppercase">
-        Console <span className="text-gray-500">/ Goals</span>
-      </h1>
-
-      <div className="flex items-center gap-5">
-        <Bell className="w-5 h-5 text-gray-400" />
-        <div className="flex items-center gap-3 bg-white/5 rounded-full px-4 py-1">
-          <WeatherWidget />
-          <UserButton />
-        </div>
-      </div>
-    </header>
-  );
-}

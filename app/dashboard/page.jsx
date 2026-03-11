@@ -17,10 +17,11 @@ import {
   Trophy,
   Cpu,
 } from "lucide-react";
-import { useClerk, UserButton, useUser } from "@clerk/nextjs";
 import WeatherWidget from "../components/WeatherWidget";
 import OrangePlusButton from "../components/button";
-// import { useRouter } from "next/navigation";
+import { useUser } from "@clerk/nextjs";
+import Sidebar from "../components/Sidebar";
+import TopBar from "../components/TopBar";
 /* ================= PAGE ================= */
 
 export default function DashboardPage() {
@@ -30,7 +31,7 @@ export default function DashboardPage() {
       <Sidebar />
 
       <div className="flex-1 flex flex-col overflow-hidden">
-        <TopBar />
+        <TopBar currentPage="Dashboard" />
 
         <div className="flex flex-1 overflow-hidden">
           <MainContent />
@@ -38,138 +39,6 @@ export default function DashboardPage() {
         </div>
       </div>
     </div>
-  );
-}
-
-/* ================= SIDEBAR ================= */
-
-function Sidebar() {
-  const { signOut } = useClerk();
-  const [showLogoutModal, setShowLogoutModal] = useState(false);
-  const router = useRouter();
-
-  const navItems = [
-    { icon: Home, label: "Home", active: true, address: "/" },
-    { icon: BookOpen, label: "Library", address: "/notebook" },
-    { icon: BarChart3, label: "Analytics", address: "/analytics" },
-    { icon: Target, label: "Goals", address: "/goals" },
-    { icon: Cpu, label: "AI Practice Lab", address: "/dashboard/ai-practice" },
-    { icon: Settings, label: "Settings", address: "/settings" },
-  ];
-
-  return (
-    <>
-      <aside className="w-20 bg-[#0e0e10] border-r border-white/5 flex flex-col items-center py-8 justify-between">
-        {/* TOP */}
-        <div className="flex flex-col items-center gap-10">
-          {/* LOGO */}
-          <div className="w-10 h-10 bg-orange-500 rounded-xl flex items-center justify-center shadow-md">
-            <Zap className="w-5 h-5 text-black" />
-          </div>
-
-          {/* NAV */}
-          <nav className="flex flex-col gap-4">
-            {navItems.map((item, i) => (
-              <button
-                key={i}
-                className={`p-3 rounded-xl transition-colors ${item.active
-                  ? "bg-white/10 text-orange-400"
-                  : "text-gray-500 hover:text-gray-200 hover:bg-white/5"
-                  }`}
-                title={item.label}
-                onClick={() => router.push(item.address)}
-              >
-                <item.icon className="w-5 h-5" />
-              </button>
-            ))}
-          </nav>
-        </div>
-
-        {/* LOGOUT */}
-        <button
-          onClick={() => setShowLogoutModal(true)}
-          className="p-3 text-gray-600 hover:text-red-400 transition-colors"
-          title="Logout"
-        >
-          <LogOut className="w-5 h-5" />
-        </button>
-      </aside>
-
-      {/* ================= LOGOUT MODAL ================= */}
-      {showLogoutModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          {/* BACKDROP */}
-          <div
-            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
-            onClick={() => setShowLogoutModal(false)}
-          />
-
-          {/* MODAL */}
-          <div className="relative bg-[#111113] border border-white/10 rounded-2xl p-6 w-[320px] shadow-xl">
-            <h3 className="text-lg font-semibold text-gray-100 mb-2">
-              Log out?
-            </h3>
-
-            <p className="text-sm text-gray-400 mb-6">
-              Are you sure you want to log out of TutorX?
-            </p>
-
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={() => setShowLogoutModal(false)}
-                className="px-4 py-2 rounded-lg text-sm text-gray-300 border border-white/10 hover:bg-white/5"
-              >
-                Cancel
-              </button>
-
-              <button
-                onClick={() => signOut({ redirectUrl: "/" })}
-                className="px-4 py-2 rounded-lg text-sm font-medium bg-orange-500 text-black hover:opacity-90"
-              >
-                Log out
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </>
-  );
-}
-
-/* ================= TOP BAR ================= */
-
-function TopBar() {
-  return (
-    <header className="h-20 bg-[#0b0b0c] border-b border-white/5 flex items-center justify-between px-8">
-      <div className="flex items-center gap-6">
-        <h1 className="text-sm font-medium tracking-wide text-gray-200">
-          Console <span className="text-gray-500">/ Dashboard</span>
-        </h1>
-
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
-          <input
-            placeholder="Search commands…"
-            className="bg-[#111113] border border-white/5 rounded-lg pl-10 pr-4 py-2 text-sm w-64
-            placeholder:text-gray-600 focus:outline-none focus:ring-1 focus:ring-orange-500/30"
-          />
-        </div>
-      </div>
-
-      <div className="flex items-center gap-5">
-        <button className="relative text-gray-400 hover:text-gray-200">
-          <Bell className="w-5 h-5" />
-          <span className="absolute -top-1 -right-1 w-2 h-2 bg-orange-500 rounded-full" />
-        </button>
-
-        <div className="flex items-center gap-3 bg-white/5 border border-white/5 rounded-full px-4 py-1">
-          <WeatherWidget />
-          <div className="w-7 h-7 rounded-full bg-orange-500 text-black flex items-center justify-center text-xs font-bold">
-            <UserButton />
-          </div>
-        </div>
-      </div>
-    </header>
   );
 }
 

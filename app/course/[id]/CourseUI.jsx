@@ -280,6 +280,61 @@ function ArticleView({
   onNext,
 }) {
   const [isCompleting, setIsCompleting] = useState(false);
+  const [isTranslating, setIsTranslating] = useState(false);
+  const [targetLanguage, setTargetLanguage] = useState(null); // null, 'Hindi', 'Telugu'
+  const [translatedTopic, setTranslatedTopic] = useState(null);
+
+  useEffect(() => {
+    // Reset translation when topic changes
+    setTargetLanguage(null);
+    setTranslatedTopic(null);
+  }, [topic]);
+
+  const handleTranslate = async (lang) => {
+    if (lang === targetLanguage) {
+      setTargetLanguage(null);
+      setTranslatedTopic(null);
+      return;
+    }
+
+    setIsTranslating(true);
+    setTargetLanguage(lang);
+
+    try {
+      const res = await fetch("/api/translate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          text: JSON.stringify(topic.content),
+          targetLanguage: lang,
+        }),
+      });
+
+      const data = await res.json();
+      if (data.translatedText) {
+        try {
+          // Attempt to parse if the AI returned it as a JSON string
+          // Clean up the string first (sometimes AI wraps in ```json)
+          let cleanJson = data.translatedText;
+          if (cleanJson.includes("```")) {
+            cleanJson = cleanJson.split("```")[1].replace(/^json/, "").trim();
+          }
+          const translatedContent = JSON.parse(cleanJson);
+          setTranslatedTopic({ ...topic, content: translatedContent });
+        } catch (e) {
+          console.error("Failed to parse translated content as JSON, using as raw string:", e);
+          // Fallback: If it's not JSON, maybe it's just raw text, but that's unlikely given our prompt
+          // For now, just show error or handle gracefully
+        }
+      }
+    } catch (error) {
+      console.error("Translation Failed:", error);
+    } finally {
+      setIsTranslating(false);
+    }
+  };
+
+  const currentTopic = translatedTopic || topic;
 
   const markCompleted = async () => {
     onOptimisticComplete(activeChapterIndex, activeTopicIndex);
@@ -309,7 +364,25 @@ function ArticleView({
 
   return (
     <div className="max-w-4xl mx-auto px-8 py-12">
-      <h1 className="text-4xl font-bold text-white mb-8">{topic.title}</h1>
+      <div className="flex items-center justify-between mb-8">
+        <h1 className="text-4xl font-bold text-white">{currentTopic.title}</h1>
+        <div className="flex items-center gap-2">
+          {['Hindi', 'Telugu'].map(lang => (
+            <button
+              key={lang}
+              onClick={() => handleTranslate(lang)}
+              disabled={isTranslating}
+              className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${
+                targetLanguage === lang 
+                ? 'bg-orange-500 border-orange-500 text-black' 
+                : 'bg-white/5 border-white/10 text-gray-400 hover:text-white hover:bg-white/10'
+              } disabled:opacity-50`}
+            >
+              {isTranslating && targetLanguage === lang ? '...' : lang}
+            </button>
+          ))}
+        </div>
+      </div>
 
       {/* VIDEO REFERENCES - Show if it's the first topic of the chapter and has videos */}
       {activeTopicIndex === 0 && course.chapters[activeChapterIndex]?.videos?.length > 0 && (
@@ -336,7 +409,7 @@ function ArticleView({
         </div>
       )}
 
-      {topic.content.map((b, i) => {
+      {currentTopic.content.map((b, i) => {
         switch (b.type) {
           case "heading":
             return (

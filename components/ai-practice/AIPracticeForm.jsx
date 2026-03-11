@@ -104,7 +104,7 @@ export default function AIPracticeForm({ onGenerate, isLoading }) {
                             </>
                         ) : (
                             <>
-                                <Sparkles className="w-5 h-5 transition-transform group-hover:scale-125" />
+                                {/* <Sparkles className="w-5 h-5 transition-transform group-hover:scale-125" /> */}
                                 <span>Generate Practice Problems</span>
                             </>
                         )}

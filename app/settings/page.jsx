@@ -16,18 +16,19 @@ import {
   Globe,
   CreditCard,
 } from "lucide-react";
-import { useClerk, UserButton } from "@clerk/nextjs";
 import WeatherWidget from "../components/WeatherWidget";
+import Sidebar from "../components/Sidebar";
+import TopBar from "../components/TopBar";
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState("general");
 
   return (
     <div className="flex h-screen bg-[#0b0b0c] text-gray-300 font-sans">
-      <Sidebar activePage="/settings" />
+      <Sidebar />
 
       <div className="flex-1 flex flex-col overflow-hidden">
-        <TopBar currentPage="Settings" />
+        <TopBar currentPage="Settings" showSearch={false} />
 
         <main className="flex-1 overflow-hidden flex">
           {/* SETTINGS SUB-NAV */}
@@ -178,65 +179,4 @@ function TabButton({ id, label, icon, active, onClick }) {
   );
 }
 
-/* ================= SHARED LAYOUT COMPONENTS ================= */
 
-function Sidebar({ activePage }) {
-  const { signOut } = useClerk();
-  const router = useRouter();
-  const navItems = [
-    { icon: Home, label: "Home", address: "/" },
-    { icon: BookOpen, label: "Library", address: "/notebook" },
-    { icon: BarChart3, label: "Analytics", address: "/analytics" },
-    { icon: Target, label: "Goals", address: "/goals" },
-    { icon: Settings, label: "Settings", address: "/settings" },
-  ];
-
-  return (
-    <aside className="w-20 bg-[#0e0e10] border-r border-white/5 flex flex-col items-center py-8 justify-between">
-      <div className="flex flex-col items-center gap-10">
-        <div className="w-10 h-10 bg-orange-500 rounded-xl flex items-center justify-center shadow-lg shadow-orange-500/20">
-          <Zap className="w-5 h-5 text-black" />
-        </div>
-        <nav className="flex flex-col gap-4">
-          {navItems.map((item, i) => (
-            <button
-              key={i}
-              onClick={() => router.push(item.address)}
-              className={`p-3 rounded-xl transition-colors ${
-                activePage === item.address
-                  ? "bg-white/10 text-orange-400"
-                  : "text-gray-500 hover:text-gray-200 hover:bg-white/5"
-              }`}
-            >
-              <item.icon className="w-5 h-5" />
-            </button>
-          ))}
-        </nav>
-      </div>
-      <button
-        onClick={() => signOut({ redirectUrl: "/" })}
-        className="p-3 text-gray-600 hover:text-red-400 transition-colors"
-      >
-        <LogOut className="w-5 h-5" />
-      </button>
-    </aside>
-  );
-}
-
-function TopBar({ currentPage }) {
-  return (
-    <header className="h-20 bg-[#0b0b0c] border-b border-white/5 flex items-center justify-between px-8">
-      <div className="flex items-center gap-6">
-        <h1 className="text-sm font-medium tracking-wide text-gray-200 uppercase">
-          Console <span className="text-gray-500">/ {currentPage}</span>
-        </h1>
-      </div>
-      <div className="flex items-center gap-5">
-        <div className="flex items-center gap-3 bg-white/5 border border-white/5 rounded-full px-4 py-1">
-          <WeatherWidget />
-          <UserButton />
-        </div>
-      </div>
-    </header>
-  );
-}
