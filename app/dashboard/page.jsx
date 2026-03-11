@@ -15,6 +15,7 @@ import {
   Zap,
   Play,
   Trophy,
+  Cpu,
 } from "lucide-react";
 import { useClerk, UserButton, useUser } from "@clerk/nextjs";
 import WeatherWidget from "../components/WeatherWidget";
@@ -52,6 +53,7 @@ function Sidebar() {
     { icon: BookOpen, label: "Library", address: "/notebook" },
     { icon: BarChart3, label: "Analytics", address: "/analytics" },
     { icon: Target, label: "Goals", address: "/goals" },
+    { icon: Cpu, label: "AI Practice Lab", address: "/dashboard/ai-practice" },
     { icon: Settings, label: "Settings", address: "/settings" },
   ];
 
@@ -71,8 +73,8 @@ function Sidebar() {
               <button
                 key={i}
                 className={`p-3 rounded-xl transition-colors ${item.active
-                    ? "bg-white/10 text-orange-400"
-                    : "text-gray-500 hover:text-gray-200 hover:bg-white/5"
+                  ? "bg-white/10 text-orange-400"
+                  : "text-gray-500 hover:text-gray-200 hover:bg-white/5"
                   }`}
                 title={item.label}
                 onClick={() => router.push(item.address)}
