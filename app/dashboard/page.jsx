@@ -16,6 +16,7 @@ import {
   Play,
   Trophy,
   Cpu,
+  Loader2
 } from "lucide-react";
 import WeatherWidget from "../components/WeatherWidget";
 import OrangePlusButton from "../components/button";
@@ -675,12 +676,14 @@ function MainContent({ searchQuery, setIsCreateModalOpen }) {
 function RightPanel() {
   const { user } = useUser();
   const [upcoming, setUpcoming] = useState([]);
+  const [isUpgrading, setIsUpgrading] = useState(false);
+
   useEffect(() => {
     if (!user) return;
 
     fetch("/api/goals", {
       headers: {
-        "x-user-id": user.id, // ✅ THIS WAS MISSING
+        "x-user-id": user.id,
       },
     })
       .then((res) => res.json())
@@ -709,6 +712,70 @@ function RightPanel() {
         ]);
       });
   }, [user]);
+
+  const handleUpgrade = async () => {
+    if (!user) return;
+    setIsUpgrading(true);
+
+    try {
+      // 1. Create order on server
+      const res = await fetch("/api/razorpay/order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount: 2499, currency: "INR" }), // ₹2499 for Pro
+      });
+
+      const order = await res.json();
+      if (!res.ok) throw new Error(order.error);
+
+      // 2. Load Razorpay script if not already loaded
+      const loadScript = () => {
+        return new Promise((resolve) => {
+          const script = document.createElement("script");
+          script.src = "https://checkout.razorpay.com/v1/checkout.js";
+          script.onload = () => resolve(true);
+          script.onerror = () => resolve(false);
+          document.body.appendChild(script);
+        });
+      };
+
+      const isScriptLoaded = await loadScript();
+      if (!isScriptLoaded) {
+        alert("Razorpay SDK failed to load. Are you online?");
+        setIsUpgrading(false);
+        return;
+      }
+
+      // 3. Open Razorpay Checkout
+      const options = {
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+        amount: order.amount,
+        currency: order.currency,
+        name: "AI Learning Platform",
+        description: "Monthly Pro Subscription",
+        order_id: order.id,
+        handler: function (response) {
+          alert(`Payment Successful! ID: ${response.razorpay_payment_id}`);
+          // Here you would typically update the user's status in the DB
+        },
+        prefill: {
+          name: user.fullName || "",
+          email: user.primaryEmailAddress?.emailAddress || "",
+        },
+        theme: {
+          color: "#f97316", // orange-500
+        },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+    } catch (err) {
+      console.error("Upgrade failed:", err);
+      alert("Payment failed to initialize.");
+    } finally {
+      setIsUpgrading(false);
+    }
+  };
 
 
 
@@ -759,8 +826,16 @@ function RightPanel() {
         <p className="text-lg font-semibold text-gray-100 mb-4">
           Unlock Cloud Compute
         </p>
-        <button className="bg-orange-500 text-black px-4 py-2 rounded-lg text-xs font-semibold hover:opacity-90">
-          Upgrade
+        <button 
+          onClick={handleUpgrade}
+          disabled={isUpgrading}
+          className="w-full h-10 bg-orange-500 text-black px-4 py-2 rounded-lg text-xs font-semibold hover:opacity-90 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
+        >
+          {isUpgrading ? (
+            <Loader2 className="w-3 h-3 animate-spin" />
+          ) : (
+            "Upgrade"
+          )}
         </button>
       </div>
     </aside>
