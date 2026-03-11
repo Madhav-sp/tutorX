@@ -23,10 +23,12 @@ import { useUser } from "@clerk/nextjs";
 import Sidebar from "../components/Sidebar";
 import TopBar from "../components/TopBar";
 import JarvisAssistant from "../components/JarvisAssistant";
+import CourseCreateModal from "../components/CourseCreateModal";
 /* ================= PAGE ================= */
 
 export default function DashboardPage() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   return (
     <div className="flex h-screen bg-[#0b0b0c] text-gray-300 font-sans">
@@ -40,11 +42,18 @@ export default function DashboardPage() {
         />
 
         <div className="flex flex-1 overflow-hidden">
-          <MainContent searchQuery={searchQuery} />
+          <MainContent 
+            searchQuery={searchQuery} 
+            setIsCreateModalOpen={setIsCreateModalOpen}
+          />
           <RightPanel />
         </div>
       </div>
       <JarvisAssistant />
+      <CourseCreateModal 
+          isOpen={isCreateModalOpen} 
+          onClose={() => setIsCreateModalOpen(false)} 
+      />
     </div>
   );
 }
@@ -370,7 +379,7 @@ export default function DashboardPage() {
 //     </main>
 //   );
 // }
-function MainContent({ searchQuery }) {
+function MainContent({ searchQuery, setIsCreateModalOpen }) {
   const router = useRouter();
   const { user } = useUser();
 
@@ -654,7 +663,7 @@ function MainContent({ searchQuery }) {
       <div className="fixed bottom-6 right-[calc(320px+24px)] z-50">
         <OrangePlusButton
           className="cursor-pointer"
-          onClick={() => router.push("/create-course")}
+          onClick={() => setIsCreateModalOpen(true)}
         />
       </div>
     </main>
