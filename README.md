@@ -11,7 +11,7 @@
 - **Rich Multimedia & Practice Integration**: Every topic includes curated theory, relevant YouTube lectures, interactive quizzes, **AI Flashcards**, and embedded live **Practice Workspaces**.
 - **Resume Learning Pill**: Smart progress tracking (`userProgress` & `localStorage`) that instantly restores exact chapter and topic positions with a single click.
 
-### 2. 📓 NotebookLLM Research Studio (With Interactive Sliders)
+### 2.NotebookLLM Research Studio (With Interactive Sliders)
 - **Dual-Pane Sliding Workspace**: Adjust the visual ratio between Document Notes and the Research Hub using an interactive **Split Ratio Slider** (`40% to 75%`).
 - **Text Scale Slider**: Customize typography size on the fly (`12px to 20px`) for comfortable reading during extended study sessions.
 - **Sliding Pill Navigation**: Switch effortlessly between **Assistant & Chat**, **Executive Summary**, **Deep Insights (Explain Section)**, and **Neural Knowledge Cards**.
@@ -64,7 +64,7 @@
 
 ---
 
-## 📁 Repository Structure
+## Repository Structure
 
 ```bash
 ├── app/
