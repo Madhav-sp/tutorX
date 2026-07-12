@@ -1,12 +1,12 @@
-# TutorX AI: Next-Generation Engineering & Research Ecosystem 🚀
+# TutorX AI: Next-Generation Engineering & Research Ecosystem 
 
 **TutorX AI** is a state-of-the-art, production-grade AI-powered learning, code practice, and research platform. Designed with **LeetCode, Take U Forward (TUF), and HackerRank** standards, it bridges the gap between structured academic learning, deep document analysis (**NotebookLLM**), and hands-on algorithm training.
 
 ---
 
-## 🌟 Key Platform Modules & Features
+## Key Platform Modules & Features
 
-### 1. 🧠 AI Course & Curriculum Studio
+### 1.  AI Course & Curriculum Studio
 - **Dynamic Multi-Chapter Generation**: Enter any topic (e.g., *Distributed Systems*, *System Design*, *Advanced React*) to generate comprehensive curriculums with multiple chapters and topics.
 - **Rich Multimedia & Practice Integration**: Every topic includes curated theory, relevant YouTube lectures, interactive quizzes, **AI Flashcards**, and embedded live **Practice Workspaces**.
 - **Resume Learning Pill**: Smart progress tracking (`userProgress` & `localStorage`) that instantly restores exact chapter and topic positions with a single click.
@@ -18,18 +18,18 @@
 - **High-Resilience Chat Assistant**: Real-time contextual document Q&A backed by Google Gemini with **automatic analytical fallbacks** so the chat never drops or throws 500 errors.
 - **Multilingual & Accessibility Tools**: Built-in translation to **Hindi** and **Telugu**, plus browser-native **Text-to-Speech (TTS)**.
 
-### 3. ⚡ AI Practice Lab (LeetCode / TUF / HackerRank Workspace)
+### 3.AI Practice Lab (LeetCode / TUF / HackerRank Workspace)
 - **Interactive Pattern Target Grid**: Select from high-frequency FAANG target patterns including **Sliding Window, Two Pointers, Dynamic Programming, Graphs & BFS/DFS, Trees & BST, and Binary Search**.
 - **Customizable Intensity & Difficulty**: Use smooth sliders to pick problem counts (`1 to 10 sprint problems`) and logic difficulty tiers (`Easy Warmup`, `Medium Standard`, `Hard FAANG`).
 - **Live Code Execution Engine**: Remote or multi-language code evaluation (`JavaScript`, `Python`, `Java`) with real-time console output, sample test cases, and instant submission verification.
 
-### 4. 🌐 Frictionless Guest Sandbox (`/demo`)
+### 4.Frictionless Guest Sandbox (`/demo`)
 - **Pre-Seeded Demo Experience**: Explore the complete dashboard, pre-generated DSA courses, and Notebooks without signing in.
 - **Automatic Fallback Capabilities**: Operates seamlessly via pre-loaded mock sessions when database queries or external AI APIs are unreachable.
 
 ---
 
-## 🏛️ System Architecture & Engineering Excellence
+## System Architecture & Engineering Excellence
 
 ```
 +-----------------------------------------------------------------------------+
@@ -53,12 +53,12 @@
 +--------------------------------------+  +-----------------------------------+
 ```
 
-### 🔐 Security & Production Hardening
+### Security & Production Hardening
 - **Multi-Tier Rate Limiting**: Built-in sliding-window rate limiters across `AI_GENERATION`, `CODE_EXECUTION`, and `AUTH_SENSITIVE` endpoints to prevent denial-of-service and API abuse.
 - **Defensive Error Boundaries**: Centralized `apiHandler` catches all runtime errors, returning standardized JSON payloads (`{ success: boolean, data?: any, error?: string }`).
 - **Input Validation & Sanitization**: Strict boundary and type verification before interacting with Mongoose schemas or prompt pipelines.
 
-### ⚖️ Tier Management & Quotas
+### Tier Management & Quotas
 - **Free Tier Constraints**: Enforces strict quotas (`Max 2 Courses`, `Max 2 AI Practice Questions`) to optimize API costs and server stability.
 - **Pro & Guest Overrides**: Smooth upgrade prompts and bypass capabilities for guest evaluation (`demo_user_123`).
 
@@ -92,7 +92,7 @@
 
 ---
 
-## 🛠️ Local Development & Setup
+## Local Development & Setup
 
 ### 1. Prerequisites
 - **Node.js** v18+ or v20+
@@ -146,7 +146,7 @@ The build produces optimized static and dynamic routes powered by Next.js 16 (Tu
 
 ---
 
-## 🎨 Design Aesthetics & UI Tokens
+## Design Aesthetics & UI Tokens
 - **Surface Palette**: Deep Obsidian (`#0a0a0c`), Charcoal (`#121216`), and Dark Elevate (`#18181d`).
 - **Accent Tokens**: Vibrant Electric Orange (`#f97316` / `orange-500`) with subtle glow rings (`shadow-[0_0_25px_rgba(249,115,22,0.15)]`).
 - **Interactive Controls**: Capsule and pill-shaped input boundaries (`rounded-full`) with crisp `text-xs` font hierarchies and smooth CSS transition states.
