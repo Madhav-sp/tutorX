@@ -1,16 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useRouter, usePathname } from "next/navigation";
 import {
-  Home,
-  BookOpen,
-  BarChart3,
-  Target,
-  Settings,
-  LogOut,
-  Bell,
-  Zap,
   CheckCircle2,
   Circle,
   Trophy,
@@ -18,7 +9,6 @@ import {
   Clock,
 } from "lucide-react";
 import { useUser } from "@clerk/nextjs";
-import WeatherWidget from "../components/WeatherWidget";
 import Sidebar from "../components/Sidebar";
 import TopBar from "../components/TopBar";
 
@@ -36,24 +26,23 @@ export default function GoalsPage() {
   useEffect(() => {
     if (!user) return;
 
-    fetch("/api/goals", {
-      headers: { "x-user-id": user.id },
-    })
+    fetch("/api/goals")
       .then((res) => res.json())
-      .then(setTasks);
+      .then((res) => setTasks(res.data || res || []));
   }, [user]);
 
   /* -------- FETCH ROADMAP -------- */
   useEffect(() => {
     fetch("/api/roadmap")
       .then((res) => res.json())
-      .then(setRoadmap);
+      .then((res) => setRoadmap(res.data || res || []));
   }, []);
 
   /* -------- TOGGLE TASK -------- */
   const toggleTask = async (id) => {
     await fetch("/api/goals", {
       method: "PATCH",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id }),
     });
 
@@ -68,14 +57,17 @@ export default function GoalsPage() {
 
     const res = await fetch("/api/goals", {
       method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         text: newTask,
-        userId: user.id,
       }),
     });
 
-    const created = await res.json();
-    setTasks((prev) => [created, ...prev]);
+    const json = await res.json();
+    const created = json.data || json;
+    if (created && created._id) {
+      setTasks((prev) => [created, ...prev]);
+    }
     setNewTask("");
     setShowAddTask(false);
   };

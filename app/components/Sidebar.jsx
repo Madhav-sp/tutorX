@@ -38,32 +38,32 @@ export default function Sidebar({ hidden = false }) {
 
   return (
     <>
-      <aside className="w-20 bg-[#0e0e10] border-r border-white/5 flex flex-col items-center py-8 justify-between z-50">
+      <aside className="w-16 bg-[#0e0e12]/90 backdrop-blur-md border-r border-white/[0.06] flex flex-col items-center py-5 justify-between z-50 shrink-0">
         {/* TOP */}
-        <div className="flex flex-col items-center gap-10">
+        <div className="flex flex-col items-center gap-8">
           {/* LOGO */}
           <div 
-            className="w-10 h-10 bg-orange-500 rounded-xl flex items-center justify-center shadow-md cursor-pointer hover:opacity-90 transition-opacity"
+            className="w-9 h-9 bg-orange-500 rounded-xl flex items-center justify-center shadow-md cursor-pointer hover:opacity-90 transition-opacity"
             onClick={() => router.push("/dashboard")}
           >
-            <Zap className="w-5 h-5 text-black" />
+            <Zap className="w-4 h-4 text-black fill-current" />
           </div>
 
           {/* NAV */}
-          <nav className="flex flex-col gap-4">
+          <nav className="flex flex-col gap-3">
             {navItems.map((item, i) => {
               const isActive = pathname === item.address || (item.address === "/dashboard" && pathname === "/");
               return (
                 <button
                   key={i}
-                  className={`p-3 rounded-xl transition-colors ${isActive
-                    ? "bg-white/10 text-orange-400"
+                  className={`p-2.5 rounded-xl transition-all ${isActive
+                    ? "bg-[#141418] border border-orange-500/30 text-orange-400 shadow-sm"
                     : "text-gray-500 hover:text-gray-200 hover:bg-white/5"
                     }`}
                   title={item.label}
                   onClick={() => handleNavigation(item.address)}
                 >
-                  <item.icon className="w-5 h-5" />
+                  <item.icon className="w-4 h-4" />
                 </button>
               );
             })}
@@ -73,10 +73,10 @@ export default function Sidebar({ hidden = false }) {
         {/* LOGOUT */}
         <button
           onClick={() => setShowLogoutModal(true)}
-          className="p-3 text-gray-600 hover:text-red-400 transition-colors"
+          className="p-2.5 text-gray-500 hover:text-red-400 hover:bg-white/5 rounded-xl transition-all"
           title="Logout"
         >
-          <LogOut className="w-5 h-5" />
+          <LogOut className="w-4 h-4" />
         </button>
       </aside>
 

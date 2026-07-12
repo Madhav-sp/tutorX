@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { getSessions, getSession } from "@/controllers/aiController";
+import { logger } from "@/shared/lib/logger";
 
 export async function GET(req) {
   try {
@@ -23,7 +24,7 @@ export async function GET(req) {
     const sessions = await getSessions(userId);
     return NextResponse.json(sessions, { status: 200 });
   } catch (error) {
-    console.error("API Error (sessions):", error);
+    logger.error("API Error (sessions)", { error: error.message });
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

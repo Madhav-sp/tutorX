@@ -4,27 +4,26 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import {
-  Home,
-  BookOpen,
-  BarChart3,
-  Target,
-  Settings,
-  LogOut,
-  Search,
-  Bell,
-  Zap,
-  Play,
   Trophy,
-  Cpu,
-  Loader2
+  Loader2,
+  Play,
+  BookOpen,
+  Layers,
+  Code2,
+  Sparkles,
+  ShieldCheck,
+  Award,
+  ArrowRight,
+  CheckCircle2,
+  Terminal
 } from "lucide-react";
-import WeatherWidget from "../components/WeatherWidget";
 import OrangePlusButton from "../components/button";
 import { useUser } from "@clerk/nextjs";
 import Sidebar from "../components/Sidebar";
 import TopBar from "../components/TopBar";
 import JarvisAssistant from "../components/JarvisAssistant";
 import CourseCreateModal from "../components/CourseCreateModal";
+import RightPanel from "../components/RightPanel";
 /* ================= PAGE ================= */
 
 export default function DashboardPage() {
@@ -61,325 +60,16 @@ export default function DashboardPage() {
 
 /* ================= MAIN CONTENT ================= */
 
-// function MainContent() {
-//   const router = useRouter();
-//   const { user } = useUser();
+const normalizeArray = (val) => {
+  if (Array.isArray(val)) return val;
+  if (val && typeof val === "object") {
+    if (Array.isArray(val.items)) return val.items;
+    if (Array.isArray(val.courses)) return val.courses;
+    if (Array.isArray(val.data)) return val.data;
+  }
+  return [];
+};
 
-//   const [courses, setCourses] = useState([]);
-//   const [loading, setLoading] = useState(true);
-//   const [showAll, setShowAll] = useState(false);
-//   const [progressData, setProgressData] = useState({});
-
-//   // Fetch courses
-//   useEffect(() => {
-//     if (!user) return;
-
-//     const cached = sessionStorage.getItem("courses");
-
-//     if (cached) {
-//       const parsed = JSON.parse(cached);
-
-//       // ✅ validate cached data (must contain real topics)
-//       const hasValidTopics =
-//         Array.isArray(parsed) &&
-//         parsed.some(
-//           (course) =>
-//             Array.isArray(course.chapters) &&
-//             course.chapters.some(
-//               (ch) => Array.isArray(ch.topics) && ch.topics.length > 0
-//             )
-//         );
-
-//       if (hasValidTopics) {
-//         setCourses(parsed);
-//         setLoading(false);
-//         return;
-//       } else {
-//         // ❌ stale cache → remove it
-//         sessionStorage.removeItem("courses");
-//       }
-//     }
-
-//     // 🔄 fetch fresh data if no cache or stale cache
-//     fetch("/api/course")
-//       .then((res) => res.json())
-//       .then((data) => {
-//         setCourses(data || []);
-//         sessionStorage.setItem("courses", JSON.stringify(data || []));
-//         setLoading(false);
-//       })
-//       .catch(() => setLoading(false));
-//   }, [user]);
-
-//   // Fetch progress for all courses
-//   useEffect(() => {
-//     if (!user || courses.length === 0) return;
-
-//     const fetchAllProgress = async () => {
-//       const progressMap = {};
-
-//       for (const course of courses) {
-//         try {
-//           const res = await fetch(`/api/progress?courseId=${course._id}`);
-//           const data = await res.json();
-
-//           if (data) {
-//             const totalTopics = course.totalTopics || 0;
-
-//             const completedTopics = Math.min(
-//               data?.completedTopics?.length || 0,
-//               totalTopics
-//             );
-
-//             const percentage =
-//               totalTopics > 0
-//                 ? Math.round((completedTopics / totalTopics) * 100)
-//                 : 0;
-
-//             progressMap[course._id] = {
-//               percentage,
-//               completedTopics,
-//               totalTopics,
-//             };
-//           }
-//         } catch (error) {
-//           console.error(`Failed to fetch progress for ${course._id}:`, error);
-//         }
-//       }
-
-//       setProgressData(progressMap);
-//     };
-
-//     fetchAllProgress();
-//   }, [user, courses]);
-
-//   const visibleCourses = showAll ? courses : courses.slice(0, 2);
-
-//   const difficultyStyle = (level) => {
-//     switch (level?.toLowerCase()) {
-//       case "beginner":
-//         return "bg-green-500/10 text-green-400";
-//       case "intermediate":
-//         return "bg-yellow-500/10 text-yellow-400";
-//       case "advanced":
-//         return "bg-red-500/10 text-red-400";
-//       default:
-//         return "bg-gray-500/10 text-gray-400";
-//     }
-//   };
-
-//   // Calculate total stats
-//   const totalCompleted = Object.values(progressData).reduce(
-//     (sum, p) => sum + p.completedTopics,
-//     0
-//   );
-//   const avgProgress =
-//     courses.length > 0
-//       ? Math.round(
-//           Object.values(progressData).reduce(
-//             (sum, p) => sum + p.percentage,
-//             0
-//           ) / courses.length
-//         )
-//       : 0;
-
-//   return (
-//     <main className="flex-1 overflow-y-auto p-8 relative custom-scroll">
-//       <div className="max-w-5xl mx-auto space-y-12">
-//         {/* METRICS */}
-//         <section className="grid grid-cols-3 gap-6">
-//           <div className="bg-[#111113] border border-white/5 rounded-2xl p-6">
-//             <p className="text-xs uppercase tracking-widest text-gray-500 mb-2">
-//               Average Progress
-//             </p>
-//             <div className="flex items-end gap-2">
-//               <span className="text-3xl font-medium text-gray-100">
-//                 {avgProgress}
-//               </span>
-//               <span className="text-sm text-gray-500">%</span>
-//             </div>
-//           </div>
-
-//           <div className="bg-[#111113] border border-white/5 rounded-2xl p-6">
-//             <p className="text-xs uppercase tracking-widest text-gray-500 mb-2">
-//               Topics Completed
-//             </p>
-//             <div className="flex items-end gap-2">
-//               <span className="text-3xl font-medium text-gray-100">
-//                 {totalCompleted}
-//               </span>
-//               <span className="text-sm text-gray-500">Topics</span>
-//             </div>
-//           </div>
-
-//           <div className="bg-[#111113] border border-white/5 rounded-2xl p-6">
-//             <p className="text-xs uppercase tracking-widest text-gray-500 mb-2">
-//               Total Courses
-//             </p>
-//             <div className="flex items-end gap-2">
-//               <span className="text-3xl font-medium text-gray-100">
-//                 {courses.length}
-//               </span>
-//               <span className="text-sm text-gray-500">Courses</span>
-//             </div>
-//           </div>
-//         </section>
-
-//         {/* ACTIVE MODULES */}
-//         <section>
-//           <div className="flex items-center justify-between mb-6">
-//             <h2 className="text-xs uppercase tracking-widest text-gray-500">
-//               Active Modules
-//             </h2>
-
-//             {courses.length > 2 && (
-//               <button
-//                 onClick={() => setShowAll(!showAll)}
-//                 className="text-xs text-orange-400 hover:text-orange-300 transition cursor-pointer"
-//               >
-//                 {showAll ? "Show less" : "View all"}
-//               </button>
-//             )}
-//           </div>
-
-//           {loading && <p className="text-sm text-gray-500">Loading courses…</p>}
-
-//           {!loading && courses.length === 0 && (
-//             <div className="text-center py-12">
-//               <p className="text-sm text-gray-500 mb-4">
-//                 No courses yet. Create your first one to get started.
-//               </p>
-//             </div>
-//           )}
-
-//           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-//             {visibleCourses.map((course) => {
-//               const progress = progressData[course._id] || {
-//                 percentage: 0,
-//                 completedTopics: 0,
-//                 totalTopics: 0,
-//               };
-
-//               return (
-//                 <div
-//                   key={course._id}
-//                   className="bg-[#111113] border border-white/5 rounded-3xl p-7
-//                            hover:border-orange-500/20 transition-colors"
-//                 >
-//                   {/* HEADER */}
-//                   <div className="flex justify-between items-start mb-6">
-//                     <div>
-//                       <h3 className="text-lg font-medium text-gray-100 mb-2 line-clamp-2 uppercase">
-//                         {course.title}
-//                       </h3>
-
-//                       <div className="flex items-center gap-3 text-xs text-gray-500">
-//                         <span
-//                           className={`px-2 py-1 rounded-full ${difficultyStyle(
-//                             course.difficulty
-//                           )}`}
-//                         >
-//                           {course.difficulty || "Unknown"}
-//                         </span>
-
-//                         <span>
-//                           Created{" "}
-//                           {new Date(course.createdAt).toLocaleDateString()}
-//                         </span>
-//                       </div>
-//                     </div>
-
-//                     <button
-//                       onClick={() => router.push(`/course/${course._id}`)}
-//                       className="w-10 h-10 rounded-full border border-white/10
-//                                flex items-center justify-center
-//                                hover:bg-orange-500 hover:text-black transition cursor-pointer"
-//                     >
-//                       <Play className="w-4 h-4 fill-current" />
-//                     </button>
-//                   </div>
-
-//                   {/* PROGRESS */}
-//                   {/* <div>
-//                     <div className="flex justify-between text-xs text-gray-500 mb-2">
-//                       <span>Progress</span>
-//                       <span className="text-gray-300">
-//                         {progress.completedTopics}/{progress.totalTopics} topics
-//                         • {progress.percentage}%
-//                       </span>
-//                     </div>
-
-//                     <div className="h-1 bg-white/10 rounded-full overflow-hidden">
-//                       <div
-//                         className="h-full bg-orange-500 transition-all duration-500"
-//                         style={{ width: `${progress.percentage}%` }}
-//                       />
-//                     </div>
-//                   </div> */}
-//                   {(() => {
-//                     const completed = progress?.completedTopics ?? 0;
-//                     const total = progress?.totalTopics ?? 0;
-//                     const percentage =
-//                       total > 0 ? Math.round((completed / total) * 100) : 0;
-
-//                     return (
-//                       <div>
-//                         <div className="flex justify-between text-xs text-gray-500 mb-2">
-//                           <span>Progress</span>
-//                           <span className="text-gray-300">
-//                             {completed}/{total} topics • {percentage}%
-//                           </span>
-//                         </div>
-
-//                         <div className="h-1 bg-white/10 rounded-full overflow-hidden">
-//                           <div
-//                             className="h-full bg-orange-500 transition-all duration-500"
-//                             style={{ width: `${percentage}%` }}
-//                           />
-//                         </div>
-//                       </div>
-//                     );
-//                   })()}
-//                 </div>
-//               );
-//             })}
-//           </div>
-//           <div className="relative bg-[#111113] mt-5 border border-orange-500/30 rounded-3xl p-8 flex flex-col justify-between">
-//             {/* 🔥 Badge */}
-//             <span className="absolute -top-3 left-6 bg-orange-500 text-black text-xs font-semibold px-3 py-1 rounded-4xl shadow">
-//               NEW
-//             </span>
-
-//             <div>
-//               <h3 className="text-xl font-semibold text-white mb-3">
-//                 Try NotebookLLM
-//               </h3>
-//               <p className="text-sm text-gray-400">
-//                 Upload PDFs, generate summaries, notes, flashcards and chat with
-//                 your documents.
-//               </p>
-//             </div>
-
-//             <button
-//               onClick={() => router.push("/notebook")}
-//               className="mt-6 bg-orange-500 text-black px-6 py-2 rounded-lg text-sm font-semibold w-fit hover:opacity-90"
-//             >
-//               Try Now
-//             </button>
-//           </div>
-//         </section>
-//       </div>
-
-//       {/* FLOATING CREATE BUTTON */}
-//       <div className="fixed bottom-6 right-[calc(320px+24px)] z-50">
-//         <OrangePlusButton
-//           className="cursor-pointer"
-//           onClick={() => router.push("/create-course")}
-//         />
-//       </div>
-//     </main>
-//   );
-// }
 function MainContent({ searchQuery, setIsCreateModalOpen }) {
   const router = useRouter();
   const { user } = useUser();
@@ -398,16 +88,20 @@ function MainContent({ searchQuery, setIsCreateModalOpen }) {
 
     const cachedCourses = sessionStorage.getItem("dashboard_courses_v2");
     if (cachedCourses) {
-      const parsed = JSON.parse(cachedCourses);
-      setCourses(parsed);
-      setLoading(false);
-      return;
+      try {
+        const parsed = JSON.parse(cachedCourses);
+        setCourses(normalizeArray(parsed));
+        setLoading(false);
+        return;
+      } catch (e) {
+        sessionStorage.removeItem("dashboard_courses_v2");
+      }
     }
 
     fetch("/api/course")
       .then((res) => res.json())
       .then((data) => {
-        const safeData = data || [];
+        const safeData = normalizeArray(data);
         setCourses(safeData);
         sessionStorage.setItem(
           "dashboard_courses_v2",
@@ -415,24 +109,33 @@ function MainContent({ searchQuery, setIsCreateModalOpen }) {
         );
         setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch(() => {
+        setCourses([]);
+        setLoading(false);
+      });
   }, [user]);
 
   /* ================= PROGRESS + STATS CACHE ================= */
 
+  const safeCoursesList = normalizeArray(courses);
+
   useEffect(() => {
-    if (!user || courses.length === 0) return;
+    if (!user || safeCoursesList.length === 0) return;
 
     const cachedProgress = sessionStorage.getItem("dashboard_progress_v2");
     const cachedStats = sessionStorage.getItem("dashboard_stats_v2");
 
     if (cachedProgress && cachedStats) {
-      setProgressData(JSON.parse(cachedProgress));
-
-      const stats = JSON.parse(cachedStats);
-      setAvgProgress(stats.avgProgress);
-      setTotalCompleted(stats.totalCompleted);
-      return;
+      try {
+        setProgressData(JSON.parse(cachedProgress));
+        const stats = JSON.parse(cachedStats);
+        setAvgProgress(stats?.avgProgress || 0);
+        setTotalCompleted(stats?.totalCompleted || 0);
+        return;
+      } catch (e) {
+        sessionStorage.removeItem("dashboard_progress_v2");
+        sessionStorage.removeItem("dashboard_stats_v2");
+      }
     }
 
     const fetchAllProgress = async () => {
@@ -440,7 +143,7 @@ function MainContent({ searchQuery, setIsCreateModalOpen }) {
       let completedSum = 0;
       let percentageSum = 0;
 
-      for (const course of courses) {
+      for (const course of safeCoursesList) {
         try {
           const res = await fetch(`/api/progress?courseId=${course._id}`);
           const data = await res.json();
@@ -470,7 +173,7 @@ function MainContent({ searchQuery, setIsCreateModalOpen }) {
       }
 
       const avg =
-        courses.length > 0 ? Math.round(percentageSum / courses.length) : 0;
+        safeCoursesList.length > 0 ? Math.round(percentageSum / safeCoursesList.length) : 0;
 
       setProgressData(progressMap);
       setTotalCompleted(completedSum);
@@ -490,10 +193,10 @@ function MainContent({ searchQuery, setIsCreateModalOpen }) {
     };
 
     fetchAllProgress();
-  }, [user, courses]);
+  }, [user, safeCoursesList.length]);
 
-  const filteredCourses = courses.filter(course =>
-    course.title.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredCourses = safeCoursesList.filter(course =>
+    (course?.title || "").toLowerCase().includes((searchQuery || "").toLowerCase())
   );
 
   const visibleCourses = showAll ? filteredCourses : filteredCourses.slice(0, 2);
@@ -501,78 +204,104 @@ function MainContent({ searchQuery, setIsCreateModalOpen }) {
   const difficultyStyle = (level) => {
     switch (level?.toLowerCase()) {
       case "beginner":
-        return "bg-green-500/10 text-green-400";
+        return "bg-green-500/10 text-green-400 border border-green-500/20";
       case "intermediate":
-        return "bg-yellow-500/10 text-yellow-400";
+        return "bg-yellow-500/10 text-yellow-400 border border-yellow-500/20";
       case "advanced":
-        return "bg-red-500/10 text-red-400";
+        return "bg-red-500/10 text-red-400 border border-red-500/20";
       default:
-        return "bg-gray-500/10 text-gray-400";
+        return "bg-gray-500/10 text-gray-400 border border-gray-500/20";
     }
   };
 
   return (
-    <main className="flex-1 overflow-y-auto p-8 relative custom-scroll">
-      <div className="max-w-5xl mx-auto space-y-12">
+    <main className="flex-1 overflow-y-auto p-6 relative custom-scroll">
+      <div className="max-w-5xl mx-auto space-y-8">
+        {/* FREE TIER QUOTA & STATUS CARD */}
+        <div className="p-5 rounded-2xl bg-[#121216] border border-white/[0.08] flex flex-col sm:flex-row items-center justify-between gap-5 shadow-lg">
+          <div className="space-y-1.5 text-center sm:text-left">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-orange-500/10 border border-orange-500/20 text-orange-400 text-[10px] font-bold uppercase tracking-widest">
+              <ShieldCheck className="w-3 h-3" /> Current Plan: Free Tier
+            </div>
+            <h3 className="text-sm font-bold text-white uppercase tracking-wide">LeetCode & TUF AI Engine Quotas</h3>
+            <p className="text-xs text-gray-400 max-w-md leading-relaxed">
+              Free accounts are granted <span className="text-orange-400 font-bold">2 Custom Courses</span> and <span className="text-orange-400 font-bold">2 AI Practice Problem Sets</span>.
+            </p>
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto shrink-0">
+            <div className="bg-[#18181d] px-4 py-2 rounded-xl border border-white/10 text-center space-y-0.5">
+              <span className="text-[9px] font-bold text-gray-500 uppercase tracking-wider block">Course Quota</span>
+              <span className="text-xs font-bold text-white">{safeCoursesList.length} / 2 Used</span>
+            </div>
+            <button
+              onClick={() => router.push("/demo")}
+              className="w-full sm:w-auto px-5 py-2.5 rounded-full bg-orange-500 hover:bg-orange-400 text-black font-bold uppercase text-[10px] tracking-widest transition shadow-sm flex items-center justify-center gap-1.5 shrink-0"
+            >
+              <Sparkles className="w-3 h-3 fill-current" /> Explore Guest Sandbox →
+            </button>
+          </div>
+        </div>
+
         {/* METRICS */}
-        <section className="grid grid-cols-3 gap-6">
-          <div className="bg-[#111113] border border-white/5 rounded-2xl p-6">
-            <p className="text-xs uppercase tracking-widest text-gray-500 mb-2">
+        <section className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="bg-[#121216] border border-white/[0.07] rounded-2xl p-5 hover:border-white/15 transition">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1">
               Average Progress
             </p>
-            <div className="flex items-end gap-2">
-              <span className="text-3xl font-medium text-gray-100">
+            <div className="flex items-end gap-1.5">
+              <span className="text-2xl font-bold text-white">
                 {avgProgress}
               </span>
-              <span className="text-sm text-gray-500">%</span>
+              <span className="text-xs text-gray-500 font-medium pb-0.5">%</span>
             </div>
           </div>
 
-          <div className="bg-[#111113] border border-white/5 rounded-2xl p-6">
-            <p className="text-xs uppercase tracking-widest text-gray-500 mb-2">
+          <div className="bg-[#121216] border border-white/[0.07] rounded-2xl p-5 hover:border-white/15 transition">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1">
               Topics Completed
             </p>
-            <div className="flex items-end gap-2">
-              <span className="text-3xl font-medium text-gray-100">
+            <div className="flex items-end gap-1.5">
+              <span className="text-2xl font-bold text-white">
                 {totalCompleted}
               </span>
-              <span className="text-sm text-gray-500">Topics</span>
+              <span className="text-xs text-gray-500 font-medium pb-0.5">Topics</span>
             </div>
           </div>
 
-          <div className="bg-[#111113] border border-white/5 rounded-2xl p-6">
-            <p className="text-xs uppercase tracking-widest text-gray-500 mb-2">
+          <div className="bg-[#121216] border border-white/[0.07] rounded-2xl p-5 hover:border-white/15 transition">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mb-1">
               Total Courses
             </p>
-            <div className="flex items-end gap-2">
-              <span className="text-3xl font-medium text-gray-100">
-                {courses.length}
+            <div className="flex items-end gap-1.5">
+              <span className="text-2xl font-bold text-white">
+                {safeCoursesList.length}
               </span>
-              <span className="text-sm text-gray-500">Courses</span>
+              <span className="text-xs text-gray-500 font-medium pb-0.5">Courses</span>
             </div>
           </div>
         </section>
 
         {/* ACTIVE MODULES */}
         <section>
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xs uppercase tracking-widest text-gray-500">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-[11px] font-bold uppercase tracking-widest text-gray-400">
               Active Modules
             </h2>
 
-            {courses.length > 2 && (
+            {safeCoursesList.length > 2 && (
               <button
                 onClick={() => setShowAll(!showAll)}
-                className="text-xs text-orange-400 hover:text-orange-300"
+                className="text-xs text-orange-400 hover:text-orange-300 font-semibold"
               >
                 {showAll ? "Show less" : "View all"}
               </button>
             )}
           </div>
 
-          {loading && <p className="text-sm text-gray-500">Loading courses…</p>}
+          {loading && <p className="text-xs text-gray-500 font-medium">Loading modules…</p>}
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {visibleCourses.map((course) => {
               const progress = progressData[course._id] || {
                 completedTopics: 0,
@@ -583,17 +312,17 @@ function MainContent({ searchQuery, setIsCreateModalOpen }) {
               return (
                 <div
                   key={course._id}
-                  className="bg-[#111113] border border-white/5 rounded-3xl p-7 hover:border-orange-500/20"
+                  className="bg-[#121216] border border-white/[0.07] rounded-2xl p-5 hover:border-orange-500/30 transition-all flex flex-col justify-between gap-4"
                 >
-                  <div className="flex justify-between items-start mb-6">
-                    <div>
-                      <h3 className="text-lg font-medium text-gray-100 mb-2 uppercase">
+                  <div className="flex justify-between items-start gap-4">
+                    <div className="space-y-2 min-w-0">
+                      <h3 className="text-sm font-bold text-white uppercase tracking-wide truncate">
                         {course.title}
                       </h3>
 
-                      <div className="flex items-center gap-3 text-xs text-gray-500">
+                      <div className="flex items-center gap-2 text-[10px] text-gray-400">
                         <span
-                          className={`px-2 py-1 rounded-full ${difficultyStyle(
+                          className={`px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider ${difficultyStyle(
                             course.difficulty
                           )}`}
                         >
@@ -608,24 +337,24 @@ function MainContent({ searchQuery, setIsCreateModalOpen }) {
 
                     <button
                       onClick={() => router.push(`/course/${course._id}`)}
-                      className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center hover:bg-orange-500 hover:text-black"
+                      className="w-8 h-8 rounded-full bg-[#18181d] border border-white/10 flex items-center justify-center hover:bg-orange-500 hover:text-black transition shrink-0"
+                      title="Resume Course"
                     >
-                      <Play className="w-4 h-4 fill-current" />
+                      <Play className="w-3.5 h-3.5 fill-current" />
                     </button>
                   </div>
 
-                  <div>
-                    <div className="flex justify-between text-xs text-gray-500 mb-2">
+                  <div className="space-y-1.5">
+                    <div className="flex justify-between text-[11px] text-gray-400 font-medium">
                       <span>Progress</span>
-                      <span className="text-gray-300">
-                        {progress.completedTopics}/{progress.totalTopics} topics
-                        • {progress.percentage}%
+                      <span className="text-gray-200 font-bold">
+                        {progress.completedTopics}/{progress.totalTopics} topics ({progress.percentage}%)
                       </span>
                     </div>
 
-                    <div className="h-1 bg-white/10 rounded-full overflow-hidden">
+                    <div className="h-1 bg-white/[0.06] rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-orange-500 transition-all duration-500"
+                        className="h-full bg-orange-500 transition-all duration-500 rounded-full"
                         style={{ width: `${progress.percentage}%` }}
                       />
                     </div>
@@ -636,26 +365,25 @@ function MainContent({ searchQuery, setIsCreateModalOpen }) {
           </div>
 
           {/* NOTEBOOK LM CARD */}
-          <div className="relative bg-[#111113] mt-5 border border-orange-500/30 rounded-3xl p-8 flex flex-col justify-between">
-            <span className="absolute -top-3 left-6 bg-orange-500 text-black text-xs font-semibold px-3 py-1 rounded-full">
+          <div className="relative bg-[#121216] mt-4 border border-orange-500/20 rounded-2xl p-6 flex flex-col justify-between hover:border-orange-500/40 transition">
+            <span className="absolute -top-2.5 left-5 bg-orange-500 text-black text-[9px] font-black px-2.5 py-0.5 rounded-full tracking-widest uppercase">
               NEW
             </span>
 
-            <div>
-              <h3 className="text-xl font-semibold text-white mb-3">
-                Try NotebookLLM
+            <div className="space-y-2">
+              <h3 className="text-base font-bold text-white tracking-wide">
+                Try NotebookLLM AI
               </h3>
-              <p className="text-sm text-gray-400">
-                Upload PDFs, generate summaries, notes, flashcards and chat with
-                your documents.
+              <p className="text-xs text-gray-400 leading-relaxed max-w-xl">
+                Upload PDFs, generate summaries, notes, flashcards and chat with your technical documentation right inside your study environment.
               </p>
             </div>
 
             <button
               onClick={() => router.push("/notebook")}
-              className="mt-6 bg-orange-500 text-black px-6 py-2 rounded-lg text-sm font-semibold w-fit hover:opacity-90"
+              className="mt-4 bg-orange-500 hover:bg-orange-400 text-black px-5 py-2 rounded-full text-[11px] font-bold uppercase tracking-widest w-fit transition shadow-sm flex items-center gap-1.5"
             >
-              Try Now
+              <Sparkles className="w-3.5 h-3.5 fill-current" /> Launch NotebookLLM →
             </button>
           </div>
         </section>
@@ -671,173 +399,4 @@ function MainContent({ searchQuery, setIsCreateModalOpen }) {
   );
 }
 
-/* ================= RIGHT PANEL ================= */
 
-function RightPanel() {
-  const { user } = useUser();
-  const [upcoming, setUpcoming] = useState([]);
-  const [isUpgrading, setIsUpgrading] = useState(false);
-
-  useEffect(() => {
-    if (!user) return;
-
-    fetch("/api/goals", {
-      headers: {
-        "x-user-id": user.id,
-      },
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        const upcomingTasks = (data || [])
-          .filter((t) => !t.completed)
-          .slice(0, 2)
-          .map((t) => ({
-            label: t.text,
-            time: "Today",
-          }));
-
-        if (upcomingTasks.length > 0) {
-          setUpcoming(upcomingTasks);
-        } else {
-          setUpcoming([
-            { label: "DSA Practice", time: "Today" },
-            { label: "Java Revision", time: "Today" },
-          ]);
-        }
-      })
-      .catch(() => {
-        setUpcoming([
-          { label: "DSA Practice", time: "Today" },
-          { label: "Java Revision", time: "Today" },
-        ]);
-      });
-  }, [user]);
-
-  const handleUpgrade = async () => {
-    if (!user) return;
-    setIsUpgrading(true);
-
-    try {
-      // 1. Create order on server
-      const res = await fetch("/api/razorpay/order", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount: 2499, currency: "INR" }), // ₹2499 for Pro
-      });
-
-      const order = await res.json();
-      if (!res.ok) throw new Error(order.error);
-
-      // 2. Load Razorpay script if not already loaded
-      const loadScript = () => {
-        return new Promise((resolve) => {
-          const script = document.createElement("script");
-          script.src = "https://checkout.razorpay.com/v1/checkout.js";
-          script.onload = () => resolve(true);
-          script.onerror = () => resolve(false);
-          document.body.appendChild(script);
-        });
-      };
-
-      const isScriptLoaded = await loadScript();
-      if (!isScriptLoaded) {
-        alert("Razorpay SDK failed to load. Are you online?");
-        setIsUpgrading(false);
-        return;
-      }
-
-      // 3. Open Razorpay Checkout
-      const options = {
-        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
-        amount: order.amount,
-        currency: order.currency,
-        name: "AI Learning Platform",
-        description: "Monthly Pro Subscription",
-        order_id: order.id,
-        handler: function (response) {
-          alert(`Payment Successful! ID: ${response.razorpay_payment_id}`);
-          // Here you would typically update the user's status in the DB
-        },
-        prefill: {
-          name: user.fullName || "",
-          email: user.primaryEmailAddress?.emailAddress || "",
-        },
-        theme: {
-          color: "#f97316", // orange-500
-        },
-      };
-
-      const rzp = new window.Razorpay(options);
-      rzp.open();
-    } catch (err) {
-      console.error("Upgrade failed:", err);
-      alert("Payment failed to initialize.");
-    } finally {
-      setIsUpgrading(false);
-    }
-  };
-
-
-
-  return (
-    <aside className="w-80 bg-[#0e0e10] border-l border-white/5 p-8 space-y-10">
-      <div>
-        <h3 className="text-xs uppercase tracking-widest text-gray-500 mb-4">
-          Activity
-        </h3>
-
-        <div className="flex items-end gap-1 h-32">
-          {[40, 70, 45, 90, 60, 30, 50].map((h, i) => (
-            <div
-              key={i}
-              className={`flex-1 rounded-sm ${i === 3 ? "bg-orange-500" : "bg-white/10"
-                }`}
-              style={{ height: `${h}%` }}
-            />
-          ))}
-        </div>
-      </div>
-
-      <div>
-        <h3 className="text-xs uppercase tracking-widest text-gray-500 mb-4">
-          Upcoming
-        </h3>
-
-        <div className="space-y-3">
-          {upcoming.map((e, i) => (
-            <div
-              key={i}
-              className="flex items-center gap-4 p-4 bg-white/5 border border-white/5 rounded-2xl"
-            >
-              <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center">
-                <Trophy className="w-4 h-4 text-orange-500" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-200">{e.label}</p>
-                <p className="text-xs text-gray-500">{e.time}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="p-6 rounded-3xl bg-[#111113] border border-orange-500/20">
-        <p className="text-xs uppercase text-gray-400 mb-2">Pro Plan</p>
-        <p className="text-lg font-semibold text-gray-100 mb-4">
-          Unlock Cloud Compute
-        </p>
-        <button 
-          onClick={handleUpgrade}
-          disabled={isUpgrading}
-          className="w-full h-10 bg-orange-500 text-black px-4 py-2 rounded-lg text-xs font-semibold hover:opacity-90 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
-        >
-          {isUpgrading ? (
-            <Loader2 className="w-3 h-3 animate-spin" />
-          ) : (
-            "Upgrade"
-          )}
-        </button>
-      </div>
-    </aside>
-  );
-}

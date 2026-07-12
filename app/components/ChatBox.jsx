@@ -10,7 +10,7 @@ function ChatBox({ notes }) {
     });
 
     const data = await res.json();
-    setA(data.answer);
+    setA(data.data?.answer || data.answer);
   };
 
   return (

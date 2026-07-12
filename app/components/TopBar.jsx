@@ -15,40 +15,46 @@ export default function TopBar({
   const [isNotifOpen, setIsNotifOpen] = useState(false);
 
   return (
-    <header className="h-20 bg-[#0b0b0c] border-b border-white/5 flex items-center justify-between px-8 z-40 relative">
+    <header className="h-16 bg-[#0e0e12]/90 backdrop-blur-md border-b border-white/[0.06] flex items-center justify-between px-6 z-40 relative shrink-0">
       <div className="flex items-center gap-6">
-        <h1 className="text-sm font-medium tracking-wide text-gray-200 uppercase">
-          Console <span className="text-gray-500">/ {currentPage}</span>
-        </h1>
+        <div className="flex items-center gap-1.5 text-xs font-semibold tracking-wider uppercase text-gray-500">
+          <span>Console</span>
+          <span className="text-gray-600">/</span>
+          <span className="text-white font-bold">{currentPage}</span>
+        </div>
 
         {showSearch && (
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500" />
             <input
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
-              placeholder="Search courses..."
-              className="bg-[#111113] border border-white/5 rounded-lg pl-10 pr-4 py-2 text-sm w-64
-              placeholder:text-gray-600 focus:outline-none focus:ring-1 focus:ring-orange-500/30 text-white transition-all focus:w-80"
+              placeholder="Search courses or topics..."
+              className="bg-[#141418] border border-white/[0.08] rounded-full pl-9 pr-4 py-1.5 text-xs w-60
+              placeholder:text-gray-500 focus:outline-none focus:border-orange-500/50 text-gray-200 hover:border-white/15 transition-all focus:w-72 shadow-inner shadow-black/20"
             />
           </div>
         )}
       </div>
 
-      <div className="flex items-center gap-5">
+      <div className="flex items-center gap-3">
         <button 
           onClick={() => setIsNotifOpen(!isNotifOpen)}
-          className={`relative transition-colors ${isNotifOpen ? "text-orange-500" : "text-gray-400 hover:text-gray-200"}`}
+          className={`p-2 rounded-full border border-white/[0.06] bg-[#141418] relative transition-all ${
+            isNotifOpen ? "text-orange-400 border-orange-500/30" : "text-gray-400 hover:text-white hover:border-white/15"
+          }`}
+          title="Notifications"
         >
-          <Bell className="w-5 h-5" />
-          <span className="absolute -top-1 -right-1 w-2 h-2 bg-orange-500 rounded-full shadow-[0_0_8px_rgba(249,115,22,0.6)]" />
+          <Bell className="w-4 h-4" />
+          <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-orange-500 rounded-full shadow-[0_0_8px_rgba(249,115,22,0.8)]" />
         </button>
 
         <NotificationCenter isOpen={isNotifOpen} onClose={() => setIsNotifOpen(false)} />
 
-        <div className="flex items-center gap-3 bg-white/5 border border-white/5 rounded-full px-4 py-1">
+        <div className="flex items-center gap-2.5 bg-[#141418] border border-white/[0.08] rounded-full px-3.5 py-1.5 shadow-sm hover:border-white/15 transition">
           <WeatherWidget />
-          <div className="w-7 h-7 rounded-full bg-orange-500 text-black flex items-center justify-center text-xs font-bold">
+          <div className="h-3.5 w-[1px] bg-white/10 mx-0.5" />
+          <div className="w-6 h-6 rounded-full overflow-hidden flex items-center justify-center">
             <UserButton appearance={{ elements: { userButtonAvatarBox: "w-6 h-6" } }} />
           </div>
         </div>

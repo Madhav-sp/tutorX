@@ -35,7 +35,6 @@ export default function ProblemDisplay({ session, onRun, onSubmit, isRunning }) 
                 [language]: value
             }
         }));
-        // Clear previous output when code changes to avoid "stale" results confusion
         if (outputs[activeTab]) {
             setOutputs(prev => {
                 const newOutputs = { ...prev };
@@ -52,7 +51,6 @@ export default function ProblemDisplay({ session, onRun, onSubmit, isRunning }) 
             return;
         }
 
-        // Auto-show console when executing
         setShowTestCases(true);
 
         const res = await (isSubmit ? onSubmit : onRun)({
@@ -65,7 +63,6 @@ export default function ProblemDisplay({ session, onRun, onSubmit, isRunning }) 
         });
 
         if (res.error || res.success === false) {
-            // We still want to show the error in the console if possible
             setOutputs(prev => ({ ...prev, [activeTab]: { 
                 passed: 0, 
                 total: currentProblem?.test_cases?.length || 0,
@@ -231,7 +228,7 @@ export default function ProblemDisplay({ session, onRun, onSubmit, isRunning }) 
                                     className="px-6 py-2.5 rounded-[18px] text-[10px] font-black uppercase tracking-widest bg-white/5 text-gray-300 hover:bg-white/10 transition-all flex items-center gap-2 border border-white/5 disabled:opacity-50 active:scale-95 shadow-xl shadow-black/20"
                                 >
                                     <Play className="w-4 h-4 text-orange-500" />
-                                    Run System
+                                    Run Code
                                 </button>
                                 <button
                                     onClick={() => handleAction(true)}
@@ -239,7 +236,7 @@ export default function ProblemDisplay({ session, onRun, onSubmit, isRunning }) 
                                     className="px-8 py-2.5 rounded-[18px] text-[10px] font-black uppercase tracking-widest bg-orange-500 text-black shadow-xl shadow-orange-500/20 hover:bg-orange-400 transition-all flex items-center gap-2 disabled:opacity-50 active:scale-95"
                                 >
                                     <CheckCircle2 className="w-4 h-4" />
-                                    Deploy Strategy
+                                    Submit Solution
                                 </button>
                             </div>
                         </div>

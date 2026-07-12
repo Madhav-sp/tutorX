@@ -1,20 +1,25 @@
-import { NextResponse } from "next/server";
-import { geminiModel } from "@/lib/gemini";
+import { auth } from "@clerk/nextjs/server";
+import { apiHandler } from "@/shared/lib/utils/apiHandler";
+import { successResponse } from "@/shared/lib/utils/apiResponse";
+import { UnauthorizedError, ValidationError, RateLimitError, AppError } from "@/shared/lib/utils/apiError";
+import { rateLimit, RATE_LIMITS } from "@/shared/lib/middleware/rateLimit";
+import { executeAIGateway } from "@/shared/lib/ai/Gateway";
 
 export const runtime = "nodejs";
 
-export async function POST(req) {
-  try {
-    const { text } = await req.json();
+export const POST = apiHandler(async (req) => {
+  const { userId } = await auth();
+  if (!userId) throw new UnauthorizedError();
 
-    if (!text || text.length < 200) {
-      return NextResponse.json(
-        { error: "Text too short to analyze" },
-        { status: 400 }
-      );
-    }
+  const rl = rateLimit(userId, RATE_LIMITS.HEAVY);
+  if (!rl.allowed) throw new RateLimitError();
 
-    const prompt = `
+  const { text } = await req.json();
+  if (!text || text.length < 200) {
+    throw new ValidationError("Text too short to analyze (minimum 200 characters)");
+  }
+
+  const prompt = `
 You are an AI tutor.
 
 From the following content:
@@ -37,26 +42,23 @@ CONTENT:
 ${text}
 `;
 
-    const result = await geminiModel.generateContent(prompt);
-    let responseText = result.response.text();
+  const responseText = await executeAIGateway({
+    prompt,
+    provider: "gemini",
+    model: "models/gemini-flash-latest",
+    temperature: 0.3,
+    maxTokens: 4000,
+    jsonMode: true,
+    userId,
+  });
 
-    // Clean markdown if Gemini adds it
-    responseText = responseText
-      .replace(/```json/g, "")
-      .replace(/```/g, "")
-      .trim();
-
-    const parsed = JSON.parse(responseText);
-
-    return NextResponse.json({
-      success: true,
-      data: parsed,
-    });
+  let parsed;
+  try {
+    const cleaned = responseText.replace(/```json/g, "").replace(/```/g, "").trim();
+    parsed = JSON.parse(cleaned);
   } catch (err) {
-    console.error("GEMINI ERROR:", err);
-    return NextResponse.json(
-      { error: "Gemini analysis failed", details: err.message },
-      { status: 500 }
-    );
+    throw new AppError("Failed to parse AI structure from document", 500, "AI_PARSE_ERROR");
   }
-}
+
+  return successResponse(parsed);
+});

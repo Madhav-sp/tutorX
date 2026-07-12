@@ -3,7 +3,7 @@ import CourseRoadmap from "@/app/components/CourseRoadmap";
 import FloatingNotepad from "@/app/components/FloatingNotepad";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { FaArrowLeft, FaCode } from "react-icons/fa6";
+import { ArrowLeft, Code } from "lucide-react";
 import CodeEditor from "@/app/components/CodeEditor";
 
 
@@ -44,103 +44,106 @@ export default function CourseUI({ course }) {
   }, [course._id]);
 
   return (
-    <div className="flex h-screen bg-black text-gray-200">
+    <div className="flex h-screen bg-[#0a0a0c] text-gray-200 font-sans overflow-hidden">
       {/* ================= SIDEBAR ================= */}
-      <div className="w-80 border-r border-white/10 overflow-y-auto">
-        {/* Header */}
-        <div className="p-6 border-b border-white/10 space-y-2">
-          {/* BACK TO DASHBOARD */}
-          <button
-            onClick={() => {
-              sessionStorage.removeItem("dashboard_courses_v2");
-              sessionStorage.removeItem("dashboard_progress_v2");
-              sessionStorage.removeItem("dashboard_stats_v2");
-              router.push("/dashboard");
-            }}
-            className="flex items-center gap-1
-             text-xs text-gray-500
-             hover:text-orange-400 transition"
-          >
-            <FaArrowLeft className="text-[10px]" />
-            <span>Back to Dashboard</span>
-          </button>
+      <div className="w-72 bg-[#0e0e12]/90 backdrop-blur-md border-r border-white/[0.06] overflow-y-auto shrink-0 flex flex-col justify-between">
+        <div>
+          {/* Header */}
+          <div className="p-5 border-b border-white/[0.06] space-y-3">
+            {/* BACK TO DASHBOARD */}
+            <button
+              onClick={() => {
+                sessionStorage.removeItem("dashboard_courses_v2");
+                sessionStorage.removeItem("dashboard_progress_v2");
+                sessionStorage.removeItem("dashboard_stats_v2");
+                router.push("/dashboard");
+              }}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#141418] border border-white/10 text-[11px] font-bold text-gray-400 hover:text-white hover:border-white/20 transition shadow-sm"
+            >
+              <ArrowLeft className="w-3 h-3" />
+              <span>Dashboard</span>
+            </button>
 
-          <div className="text-xl text-gray-500">Course</div>
-          <div className="text-lg font-semibold text-white capitalize">
-            {course.title}
+            <div>
+              <span className="text-[10px] font-bold text-orange-400 uppercase tracking-widest block">Course Curriculum</span>
+              <h2 className="text-sm font-bold text-white uppercase tracking-wide leading-snug mt-0.5 truncate">
+                {course.title}
+              </h2>
+            </div>
+
+            {/* Progress bar */}
+            {progress && (
+              <div className="space-y-1.5 pt-1">
+                <div className="flex justify-between text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+                  <span>Overall Progress</span>
+                  <span className="text-gray-300 font-mono">{progress.progressPercent || 0}%</span>
+                </div>
+                <div className="w-full h-1 bg-white/[0.06] rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-orange-500 transition-all duration-500 rounded-full"
+                    style={{ width: `${progress.progressPercent || 0}%` }}
+                  />
+                </div>
+              </div>
+            )}
           </div>
 
-          {/* Progress bar */}
-          {progress && (
-            <div className="mt-3">
-              <div className="text-xs text-gray-400 mb-1">
-                Progress: {progress.progressPercent || 0}%
-              </div>
-              <div className="w-full h-2 bg-white/10 rounded">
-                <div
-                  className="h-2 bg-orange-500 rounded transition-all"
-                  style={{ width: `${progress.progressPercent || 0}%` }}
-                />
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Chapters */}
-        <div className="p-4 space-y-2">
-          {course.chapters.map((ch, ci) => (
-            <div key={ci}>
-              <button
-                onClick={() => {
-                  setActiveChapterIndex(ci);
-                  setActiveTopicIndex(0);
-                  setView("content");
-                }}
-                className={`w-full text-left text-sm font-medium transition-colors px-3 py-2 rounded-lg ${ci === activeChapterIndex
-                  ? "text-orange-400 bg-orange-500/10"
-                  : "text-gray-400 hover:text-gray-200 hover:bg-white/5"
+          {/* Chapters */}
+          <div className="p-3 space-y-1.5">
+            <span className="px-2 text-[9px] font-bold text-gray-600 uppercase tracking-[0.2em] block pt-1">Modules</span>
+            {course.chapters.map((ch, ci) => (
+              <div key={ci}>
+                <button
+                  onClick={() => {
+                    setActiveChapterIndex(ci);
+                    setActiveTopicIndex(0);
+                    setView("content");
+                  }}
+                  className={`w-full text-left text-xs font-bold uppercase tracking-wider transition-all px-3 py-2 rounded-xl flex items-center justify-between gap-2 ${
+                    ci === activeChapterIndex
+                      ? "text-orange-400 bg-[#141418] border border-orange-500/30 shadow-sm"
+                      : "text-gray-400 hover:text-gray-200 hover:bg-white/5"
                   }`}
-              >
-                {ci + 1}. {ch.chapterTitle}
-              </button>
+                >
+                  <span className="truncate">{ci + 1}. {ch.chapterTitle}</span>
+                </button>
 
-              {ci === activeChapterIndex && (
-                <div className="ml-4 mt-1 space-y-1">
-                  {ch.topics.map((t, ti) => {
-                    const completed = progress?.completedTopics?.some(
-                      (ct) => ct.chapterIndex === ci && ct.topicIndex === ti
-                    );
+                {ci === activeChapterIndex && (
+                  <div className="ml-3 mt-1.5 space-y-1 pl-2 border-l border-white/10">
+                    {ch.topics.map((t, ti) => {
+                      const completed = progress?.completedTopics?.some(
+                        (ct) => ct.chapterIndex === ci && ct.topicIndex === ti
+                      );
 
-                    return (
-                      <button
-                        key={ti}
-                        onClick={() => {
-                          setActiveTopicIndex(ti);
-                          setView("content");
-                        }}
-                        className={`flex items-center justify-between w-full text-left text-sm transition-colors px-3 py-1.5 rounded ${ti === activeTopicIndex
-                          ? "text-gray-200 bg-white/5"
-                          : "text-gray-500 hover:text-gray-300 hover:bg-white/5"
+                      return (
+                        <button
+                          key={ti}
+                          onClick={() => {
+                            setActiveTopicIndex(ti);
+                            setView("content");
+                          }}
+                          className={`flex items-center justify-between w-full text-left text-[11px] font-semibold transition-all px-2.5 py-1 rounded-lg gap-2 ${
+                            ti === activeTopicIndex
+                              ? "text-white bg-[#18181d] border border-white/10 shadow-sm"
+                              : "text-gray-400 hover:text-gray-200 hover:bg-white/5"
                           }`}
-                      >
-                        <span>{t.title}</span>
-                        {completed && (
-                          <span className="text-green-400 text-xs">✔</span>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
+                        >
+                          <span className="truncate">{t.title}</span>
+                          {completed && (
+                            <span className="text-green-400 text-xs shrink-0">✔</span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
               )}
             </div>
           ))}
         </div>
-
-        {/* Divider */}
-        <div className="border-t border-white/10 my-4" />
+        </div>
 
         {/* Utilities */}
-        <div className="px-4 pb-4 space-y-1">
+        <div className="p-4 border-t border-white/[0.06] space-y-1.5 bg-[#0b0b0d]">
           {progress?.lastViewed && (
             <button
               onClick={() => {
@@ -148,39 +151,44 @@ export default function CourseUI({ course }) {
                 setActiveTopicIndex(progress.lastViewed.topicIndex);
                 setView("content");
               }}
-              className="block w-full text-left text-orange-400 px-3 py-2 rounded hover:bg-orange-500/10 text-sm"
+              className="w-full text-left text-orange-400 px-3 py-1.5 rounded-xl bg-orange-500/10 border border-orange-500/20 hover:bg-orange-500/20 text-xs font-bold transition flex items-center gap-2 shadow-sm"
             >
-              ▶ Resume Learning
+              <span>▶ Resume Learning</span>
             </button>
           )}
 
           <button
             onClick={() => setView("roadmap")}
-            className="block w-full text-left text-gray-400 hover:text-gray-200 px-3 py-2 rounded hover:bg-white/5 text-sm"
+            className={`w-full text-left px-3 py-1.5 rounded-xl text-xs font-semibold transition flex items-center gap-2 ${
+              view === "roadmap" ? "text-orange-400 bg-[#141418] border border-orange-500/30" : "text-gray-400 hover:text-white hover:bg-white/5"
+            }`}
           >
-            📍 Course Roadmap
+            <span>📍 Course Roadmap</span>
           </button>
           <button
             onClick={() => setView("flashcards")}
-            className="block w-full text-left text-gray-400 hover:text-gray-200 px-3 py-2 rounded hover:bg-white/5 text-sm"
+            className={`w-full text-left px-3 py-1.5 rounded-xl text-xs font-semibold transition flex items-center gap-2 ${
+              view === "flashcards" ? "text-orange-400 bg-[#141418] border border-orange-500/30" : "text-gray-400 hover:text-white hover:bg-white/5"
+            }`}
           >
-            🃏 Flashcards
+            <span>🃏 AI Flashcards</span>
           </button>
           <button
             onClick={() => setView("quiz")}
-            className="block w-full text-left text-gray-400 hover:text-gray-200 px-3 py-2 rounded hover:bg-white/5 text-sm"
+            className={`w-full text-left px-3 py-1.5 rounded-xl text-xs font-semibold transition flex items-center gap-2 ${
+              view === "quiz" ? "text-orange-400 bg-[#141418] border border-orange-500/30" : "text-gray-400 hover:text-white hover:bg-white/5"
+            }`}
           >
-            ✏️ Quiz
+            <span>✏️ Topic Quiz</span>
           </button>
           <button
             onClick={() => setView("practice")}
-            className={`flex items-center gap-2 w-full text-left px-3 py-2 rounded text-sm transition-colors ${view === "practice"
-              ? "text-orange-400 bg-orange-500/10"
-              : "text-gray-400 hover:text-gray-200 hover:bg-white/5"
-              }`}
+            className={`w-full text-left px-3 py-1.5 rounded-xl text-xs font-semibold transition flex items-center gap-2 ${
+              view === "practice" ? "text-orange-400 bg-[#141418] border border-orange-500/30" : "text-gray-400 hover:text-white hover:bg-white/5"
+            }`}
           >
-            <FaCode className="text-xs" />
-            <span>Practice Workspace</span>
+            <Code className="w-3.5 h-3.5" />
+            <span>LeetCode Workspace</span>
           </button>
         </div>
       </div>
@@ -310,7 +318,8 @@ function ArticleView({
         }),
       });
 
-      const data = await res.json();
+      const rawData = await res.json();
+      const data = rawData.data || rawData;
       if (data.translatedText) {
         try {
           // Attempt to parse if the AI returned it as a JSON string

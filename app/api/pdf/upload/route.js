@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
+import { auth } from "@clerk/nextjs/server";
 import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf.mjs";
+import { logger } from "@/shared/lib/logger";
+import { rateLimit, RATE_LIMITS } from "@/shared/lib/middleware/rateLimit";
 
 export const runtime = "nodejs";
 
@@ -11,12 +14,27 @@ const workerSrc = new URL(
 
 export async function POST(req) {
   try {
+    const { userId } = await auth();
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const rl = rateLimit(userId, RATE_LIMITS.HEAVY);
+    if (!rl.allowed) {
+      return NextResponse.json({ error: "Rate limit exceeded. Please try again later." }, { status: 429 });
+    }
+
     // 1️⃣ Read form data
     const formData = await req.formData();
     const file = formData.get("pdf");
 
     if (!file) {
       return NextResponse.json({ error: "No PDF uploaded" }, { status: 400 });
+    }
+
+    // Security: Validate file size (max 10MB to prevent Vercel memory exhaustion)
+    if (file.size > 10 * 1024 * 1024) {
+      return NextResponse.json({ error: "PDF file too large (max 10MB allowed)" }, { status: 413 });
     }
 
     // 2️⃣ Convert file → Uint8Array (RAM only)
@@ -54,7 +72,7 @@ export async function POST(req) {
       text: extractedText,
     });
   } catch (err) {
-    console.error("PDF ERROR:", err);
+    logger.error("PDF ERROR:", { error: err.message });
     return NextResponse.json(
       {
         error: "PDF processing failed",

@@ -19,6 +19,7 @@ export default function CourseCreateModal({ isOpen, onClose }) {
     const { user } = useUser();
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
+    const [errorMessage, setErrorMessage] = useState("");
     const [form, setForm] = useState({
         title: "",
         description: "",
@@ -35,6 +36,7 @@ export default function CourseCreateModal({ isOpen, onClose }) {
         if (!user) return;
 
         setIsLoading(true);
+        setErrorMessage("");
 
         try {
             const res = await fetch("/api/generate-course", {
@@ -46,10 +48,13 @@ export default function CourseCreateModal({ isOpen, onClose }) {
                 }),
             });
 
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.error || "Something went wrong");
+            const rawData = await res.json();
+            if (!res.ok || rawData.error) {
+                throw new Error(rawData.error || rawData.message || "Course generation failed.");
+            }
 
-            if (data.success) {
+            const data = rawData.data || rawData;
+            if (rawData.success || data.courseId) {
                 sessionStorage.removeItem("dashboard_courses_v2");
                 sessionStorage.removeItem("dashboard_progress_v2");
                 sessionStorage.removeItem("dashboard_stats_v2");
@@ -57,6 +62,7 @@ export default function CourseCreateModal({ isOpen, onClose }) {
             }
         } catch (err) {
             console.error("Course generation failed:", err);
+            setErrorMessage(err.message);
             setIsLoading(false);
         }
     };
@@ -194,6 +200,25 @@ export default function CourseCreateModal({ isOpen, onClose }) {
                                     </button>
                                 </div>
                             </div>
+
+                            {errorMessage && (
+                                <div className="p-5 rounded-[22px] bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-semibold leading-relaxed animate-in fade-in space-y-3">
+                                    <p className="font-bold uppercase tracking-wider">Course Synthesis Alert</p>
+                                    <p>{errorMessage}</p>
+                                    {errorMessage.includes("limit") && (
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                onClose();
+                                                router.push("/demo");
+                                            }}
+                                            className="mt-2 w-full py-2.5 bg-orange-500 text-black font-black uppercase text-[10px] tracking-widest rounded-xl hover:bg-orange-400 transition"
+                                        >
+                                            Explore Interactive Demo Account →
+                                        </button>
+                                    )}
+                                </div>
+                            )}
 
                             {/* Submit */}
                             <button 

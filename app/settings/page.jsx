@@ -1,22 +1,11 @@
 "use client";
 import React, { useState } from "react";
-import { useRouter } from "next/navigation";
 import {
-  Home,
-  BookOpen,
-  BarChart3,
-  Target,
-  Settings,
-  LogOut,
-  Bell,
-  Zap,
   User,
   Shield,
   Palette,
-  Globe,
   CreditCard,
 } from "lucide-react";
-import WeatherWidget from "../components/WeatherWidget";
 import Sidebar from "../components/Sidebar";
 import TopBar from "../components/TopBar";
 

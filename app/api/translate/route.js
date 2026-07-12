@@ -1,19 +1,27 @@
-import { NextResponse } from "next/server";
+import { auth } from "@clerk/nextjs/server";
 import Groq from "groq-sdk";
+import { apiHandler } from "@/shared/lib/utils/apiHandler";
+import { successResponse } from "@/shared/lib/utils/apiResponse";
+import { UnauthorizedError, ValidationError, RateLimitError } from "@/shared/lib/utils/apiError";
+import { rateLimit, RATE_LIMITS } from "@/shared/lib/middleware/rateLimit";
 
 const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY,
 });
 
-export async function POST(req) {
-  try {
-    const { text, targetLanguage } = await req.json();
+export const POST = apiHandler(async (req) => {
+  const { userId } = await auth();
+  if (!userId) throw new UnauthorizedError();
 
-    if (!text || !targetLanguage) {
-      return NextResponse.json({ error: "Missing text or targetLanguage" }, { status: 400 });
-    }
+  const rl = rateLimit(userId, RATE_LIMITS.AI_GENERATION);
+  if (!rl.allowed) throw new RateLimitError();
 
-    const prompt = `Translate the following educational content to ${targetLanguage}. 
+  const { text, targetLanguage } = await req.json();
+  if (!text || !targetLanguage) {
+    throw new ValidationError("Missing text or targetLanguage");
+  }
+
+  const prompt = `Translate the following educational content to ${targetLanguage}. 
 
 STRICT INSTRUCTIONS:
 1. Return ONLY the translated content. No pre-amble, no explanations.
@@ -25,18 +33,14 @@ STRICT INSTRUCTIONS:
 Content to translate (may be a JSON string):
 ${text}`;
 
-    const completion = await groq.chat.completions.create({
-      model: "llama-3.3-70b-versatile",
-      messages: [{ role: "user", content: prompt }],
-      temperature: 0.2,
-      max_tokens: 4000,
-    });
+  const completion = await groq.chat.completions.create({
+    model: "llama-3.3-70b-versatile",
+    messages: [{ role: "user", content: prompt }],
+    temperature: 0.2,
+    max_tokens: 4000,
+  });
 
-    const translatedText = completion.choices?.[0]?.message?.content ?? "";
+  const translatedText = completion.choices?.[0]?.message?.content ?? "";
 
-    return NextResponse.json({ translatedText });
-  } catch (err) {
-    console.error("Translation Error:", err);
-    return NextResponse.json({ error: "Failed to translate", details: err.message }, { status: 500 });
-  }
-}
+  return successResponse({ translatedText });
+});

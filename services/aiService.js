@@ -1,9 +1,8 @@
-import { geminiModel } from "@/lib/gemini";
-
-console.log("Using Gemini model from lib/gemini");
+import { executeAIGateway } from "@/shared/lib/ai/Gateway";
+import { logger } from "@/shared/lib/logger";
 
 /**
- * Generates DSA problems using Gemini AI based on pattern and difficulty.
+ * Generates DSA problems using AI Gateway based on pattern and difficulty.
  * @param {string} pattern - DSA pattern (e.g., "Sliding Window")
  * @param {number} count - Number of problems (1-10)
  * @param {string} difficulty - Difficulty level (Easy, Medium, Hard)
@@ -62,17 +61,21 @@ STRICT PARSING RULES:
 `;
 
   try {
-    const result = await geminiModel.generateContent(prompt);
-    const response = await result.response;
-    const raw = response.text();
+    const raw = await executeAIGateway({
+      prompt,
+      provider: "gemini",
+      model: "models/gemini-flash-latest",
+      temperature: 0.3,
+      maxTokens: 6000,
+      jsonMode: true,
+    });
 
     function extractJSON(text) {
       const match = text.match(/\[[\s\S]*\]/);
-      if (!match) throw new Error("No JSON array returned from Gemini");
+      if (!match) throw new Error("No JSON array returned from AI Gateway");
       try {
         return JSON.parse(match[0]);
       } catch (e) {
-        // Fallback to object search if array fails
         const braceMatch = text.match(/\{[\s\S]*\}/);
         if (braceMatch) {
           const parsed = JSON.parse(braceMatch[0]);
@@ -84,10 +87,9 @@ STRICT PARSING RULES:
       }
     }
 
-    const problems = extractJSON(raw);
-    return problems;
+    return extractJSON(raw);
   } catch (error) {
-    console.error("Gemini AI Problem Generation Error:", error);
-    throw new Error("Failed to generate problems with Gemini: " + error.message);
+    logger.error("AI Gateway Problem Generation Error", { error: error.message });
+    throw new Error("Failed to generate problems: " + error.message);
   }
 }

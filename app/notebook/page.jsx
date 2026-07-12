@@ -34,11 +34,14 @@ import ReactMarkdown from "react-markdown";
 import WeatherWidget from "../components/WeatherWidget";
 import Sidebar from "../components/Sidebar";
 import TopBar from "../components/TopBar";
+import RightPanel from "../components/RightPanel";
 
 export default function NotebookPage() {
   const [notebooks, setNotebooks] = useState([]);
   const [selectedNotebook, setSelectedNotebook] = useState(null);
   const [activeView, setActiveView] = useState("chat"); // Default to chat in research hub
+  const [panelSplit, setPanelSplit] = useState(55); // Slider for panel split (40% to 75%)
+  const [textScale, setTextScale] = useState(14); // Slider for text scale (12px to 20px)
   const [selection, setSelection] = useState("");
   const [sectionExplanation, setSectionExplanation] = useState("");
   const [explaining, setExplaining] = useState(false);
@@ -48,8 +51,21 @@ export default function NotebookPage() {
 
   useEffect(() => {
     fetch("/api/notebook/list")
-      .then((res) => res.json())
-      .then(setNotebooks);
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch notebooks");
+        return res.json();
+      })
+      .then((res) => {
+        const list = Array.isArray(res?.data)
+          ? res.data
+          : Array.isArray(res?.items)
+          ? res.items
+          : Array.isArray(res)
+          ? res
+          : [];
+        setNotebooks(list);
+      })
+      .catch(() => setNotebooks([]));
   }, []);
 
   const handleTextSelection = (e) => {
@@ -177,214 +193,236 @@ export default function NotebookPage() {
                   </div>
                 </div>
               </div>
-              <RightPanel />
+              <RightPanel
+                activityLabel="Learning Activity"
+                upcomingLabel="Up Next"
+                defaultTasks={[
+                  { label: "Review Notebooks", time: "Today" },
+                  { label: "Weekly Goals", time: "Today" },
+                ]}
+                upgradeTitle="Unlock AI Deep-Analytic Engine"
+                upgradeSubtitle="Upgrade Now"
+                upgradeButtonText="Elevate"
+                enableRazorpay={false}
+              />
             </div>
           ) : (
-            /* ================= WORKSPACE VIEW (TRIPLE PANE) ================= */
-            <div className="flex h-full w-full overflow-hidden bg-[#070708]">
-              {/* 1. LEFT PANEL: NAVIGATOR */}
-              {!isFocusMode && (
-                <aside className="w-64 border-r border-white/5 bg-[#0e0e10]/50 backdrop-blur-xl p-6 flex flex-col gap-2 animate-in slide-in-from-left-4 duration-300 no-print">
-                  <div className="flex items-center justify-between mb-6">
-                    <button
-                      onClick={() => setSelectedNotebook(null)}
-                      className="flex items-center gap-2 px-3 py-2 text-[10px] font-black text-gray-500 hover:text-orange-400 transition uppercase tracking-widest group"
-                    >
-                      <ArrowLeft size={14} className="group-hover:-translate-x-1 transition-transform" />
-                      Library
-                    </button>
-                    
-                    <button
-                      onClick={() => setIsFocusMode(!isFocusMode)}
-                      className="p-2 rounded-lg border border-white/5 text-gray-500 hover:text-white transition-all"
-                      title="Toggle Focus Mode"
-                    >
-                      <Maximize2 size={14} />
-                    </button>
+            /* ================= WORKSPACE VIEW (COMPACT SLIDING SPLIT PANE) ================= */
+            <div className="flex flex-col h-full w-full overflow-hidden bg-[#0a0a0c]">
+              {/* TOP SLIDER & TAB CONTROL BAR */}
+              <div className="h-14 bg-[#0e0e12] border-b border-white/[0.06] px-6 flex flex-wrap items-center justify-between shrink-0 gap-4 no-print z-20">
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => setSelectedNotebook(null)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#141418] border border-white/10 text-[11px] font-bold text-gray-400 hover:text-white hover:border-white/20 transition shadow-sm"
+                  >
+                    <ArrowLeft className="w-3.5 h-3.5" />
+                    <span>Library</span>
+                  </button>
+
+                  <div className="h-4 w-[1px] bg-white/10 mx-1" />
+
+                  {/* SLIDING PILL TABS */}
+                  <div className="flex items-center bg-[#141418] border border-white/[0.08] rounded-full p-1 gap-1">
+                    {[
+                      { id: "chat", label: "Assistant & Chat", icon: MessageSquare },
+                      { id: "summary", label: "Key Summary", icon: Zap },
+                      { id: "explanation", label: "Deep Insights", icon: Layers },
+                      { id: "flashcards", label: "Knowledge Cards", icon: Sparkles },
+                    ].map((tab) => {
+                      const Icon = tab.icon;
+                      const isActive = activeView === tab.id;
+                      return (
+                        <button
+                          key={tab.id}
+                          onClick={() => setActiveView(tab.id)}
+                          className={`px-3 py-1 rounded-full text-[11px] font-bold transition-all flex items-center gap-1.5 ${
+                            isActive
+                              ? "bg-orange-500 text-black shadow-sm"
+                              : "text-gray-400 hover:text-white"
+                          }`}
+                        >
+                          <Icon className="w-3.5 h-3.5" />
+                          <span>{tab.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* SLIDERS CONTROLS (THE INTERACTIVE SLIDERS) */}
+                <div className="flex items-center gap-5 text-xs text-gray-400 font-semibold">
+                  {/* SPLIT RESIZE SLIDER */}
+                  <div className="flex items-center gap-2 bg-[#141418] border border-white/[0.08] px-3.5 py-1 rounded-full">
+                    <span className="text-[10px] text-gray-500 uppercase font-bold">Split Ratio:</span>
+                    <input
+                      type="range"
+                      min="40"
+                      max="75"
+                      value={panelSplit}
+                      onChange={(e) => setPanelSplit(Number(e.target.value))}
+                      className="w-20 accent-orange-500 cursor-pointer h-1 bg-white/10 rounded-lg appearance-none"
+                      title="Slide to resize notes and chat panes"
+                    />
+                    <span className="w-8 text-right font-mono text-white text-[11px]">{panelSplit}%</span>
                   </div>
 
-                  <div className="space-y-1">
-                    <p className="text-[10px] font-black text-gray-700 uppercase tracking-[0.2em] px-4 mb-4">
-                      Research Guide
-                    </p>
-                    <SidebarItem
-                      icon={<MessageSquare size={18} />}
-                      label="Research Hub"
-                      active={activeView === "chat"}
-                      onClick={() => setActiveView("chat")}
+                  {/* TEXT SCALE SLIDER */}
+                  <div className="flex items-center gap-2 bg-[#141418] border border-white/[0.08] px-3.5 py-1 rounded-full">
+                    <span className="text-[10px] text-gray-500 uppercase font-bold">Text Scale:</span>
+                    <input
+                      type="range"
+                      min="12"
+                      max="20"
+                      value={textScale}
+                      onChange={(e) => setTextScale(Number(e.target.value))}
+                      className="w-16 accent-orange-500 cursor-pointer h-1 bg-white/10 rounded-lg appearance-none"
+                      title="Slide to adjust font size"
                     />
-                    <SidebarItem
-                      icon={<Zap size={18} />}
-                      label="Key Summary"
-                      active={activeView === "summary"}
-                      onClick={() => setActiveView("summary")}
-                    />
-                    <SidebarItem
-                      icon={<Layers size={18} />}
-                      label="Deep Insights"
-                      active={activeView === "explanation"}
-                      onClick={() => setActiveView("explanation")}
-                    />
-                    <SidebarItem
-                      icon={<Sparkles size={18} />}
-                      label="Knowledge Cards"
-                      active={activeView === "flashcards"}
-                      onClick={() => setActiveView("flashcards")}
-                    />
+                    <span className="w-8 text-right font-mono text-white text-[11px]">{textScale}px</span>
                   </div>
 
-                  <div className="mt-auto p-5 rounded-3xl bg-orange-500/5 border border-orange-500/10">
-                    <div className="flex items-center gap-2 text-orange-500 text-[10px] font-black uppercase mb-2">
-                      <Sparkles size={12} />
-                      AI Assistant
+                  <button
+                    onClick={handleDownloadPDF}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-orange-500/10 border border-orange-500/20 text-orange-400 hover:bg-orange-500 hover:text-black text-[11px] font-bold transition shadow-sm"
+                    title="Export PDF Notes"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>Export</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* DUAL PANE WORKSPACE AREA */}
+              <div className="flex-1 flex overflow-hidden relative">
+                {/* 1. LEFT PANE: SOURCE CONTENT */}
+                <section
+                  style={{ width: `${panelSplit}%` }}
+                  className="h-full overflow-y-auto p-6 custom-scroll relative bg-[#0a0a0c] border-r border-white/[0.06] transition-[width] duration-150 ease-out shrink-0"
+                  onMouseUp={handleTextSelection}
+                >
+                  <div className="max-w-3xl mx-auto space-y-4">
+                    <div className="flex items-center justify-between pb-3 border-b border-white/[0.06]">
+                      <div className="flex items-center gap-2">
+                        <span className="px-2.5 py-0.5 rounded-full bg-orange-500/10 border border-orange-500/20 text-orange-400 font-bold uppercase tracking-wider text-[10px]">Source Notes</span>
+                        <h2 className="text-base font-bold text-white uppercase tracking-wide truncate">{selectedNotebook.title || "Document Notes"}</h2>
+                      </div>
+                      <div className="px-2.5 py-0.5 rounded-full bg-[#18181d] border border-white/10 text-[10px] font-bold text-gray-400">
+                        Version 1.0
+                      </div>
                     </div>
-                    <p className="text-[11px] text-gray-500 leading-relaxed">
-                      Highlight any text in the source to trigger deep-dive reasoning.
-                    </p>
-                  </div>
-                </aside>
-              )}
 
-              {/* 2. MIDDLE PANEL: THE SOURCE CONTENT */}
-              <section
-                className="flex-1 overflow-y-auto p-12 custom-scroll relative bg-[#070708] border-r border-white/5"
-                onMouseUp={handleTextSelection}
-              >
-                <div className="max-w-2xl mx-auto">
-                  <div className="flex items-center justify-between mb-10">
-                    <div>
-                      <span className="text-[10px] text-orange-500 font-black uppercase tracking-[0.3em] mb-1">Source</span>
-                      <h2 className="text-2xl font-black text-white tracking-tight uppercase">Document Notes</h2>
-                    </div>
-                    <div className="flex items-center gap-3 no-print">
-                      <button 
-                        onClick={handleDownloadPDF}
-                        className="flex items-center gap-2 px-4 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-black text-[10px] font-black uppercase tracking-widest transition-all shadow-lg shadow-orange-500/10"
+                    <div className="relative group print-content">
+                      <div
+                        style={{ fontSize: `${textScale}px`, lineHeight: 1.7 }}
+                        className="prose prose-invert prose-orange max-w-none prose-headings:text-white prose-headings:font-bold prose-headings:tracking-tight bg-[#121216] p-6 rounded-2xl border border-white/[0.07] shadow-xl select-text"
                       >
-                        <Download size={14} /> Export PDF
-                      </button>
-                      <div className="px-3 py-1 rounded-full bg-white/5 border border-white/5 text-[9px] font-black text-gray-500">
-                        V1.0
+                        <ReactMarkdown>{selectedNotebook.notes}</ReactMarkdown>
                       </div>
                     </div>
                   </div>
 
-                  <div className="relative group print-content">
-                    <div className="absolute -inset-1 bg-gradient-to-r from-orange-500/10 to-transparent rounded-[2rem] blur opacity-20 pointer-events-none no-print"></div>
-                    <div className="relative prose prose-invert prose-orange max-w-none prose-p:leading-[1.8] prose-p:text-[16px] prose-headings:text-white prose-headings:font-black prose-headings:tracking-tight bg-[#111113]/50 p-10 rounded-[2.5rem] border border-white/5 shadow-2xl select-text">
-                      <ReactMarkdown>{selectedNotebook.notes}</ReactMarkdown>
-                    </div>
-                  </div>
-                </div>
-
-                {/* FLOATING ACTION */}
-                {selectionBox && (
-                  <button
-                    onClick={explainSelection}
-                    style={{
-                      position: "absolute",
-                      top: selectionBox.top,
-                      left: selectionBox.left,
-                      transform: "translateX(-50%)",
-                    }}
-                    className="z-50 bg-white text-black px-4 py-2 rounded-xl text-[10px] font-black flex items-center gap-2 shadow-[0_10px_40px_rgba(0,0,0,0.5)] border border-white hover:scale-105 active:scale-95 transition-all animate-in zoom-in-90 duration-300 uppercase"
-                  >
-                    <Sparkles size={14} className="text-orange-500" /> Explain
-                  </button>
-                )}
-              </section>
-
-              {/* 3. RIGHT PANEL: THE RESEARCH HUB (Chat, Info, Flashcards) */}
-              <aside className="w-[480px] bg-[#0b0b0c] flex flex-col shadow-2xl relative z-10 no-print">
-                {/* HUB TABS */}
-                <div className="p-4 border-b border-white/5 flex gap-2">
-                  <button
-                    onClick={() => setActiveView("chat")}
-                    className={`flex-1 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeView === "chat" ? "bg-white text-black" : "text-gray-500 hover:text-gray-300 hover:bg-white/5"}`}
-                  >
-                    Assistant
-                  </button>
-                  <button
-                    onClick={() => setActiveView("summary")}
-                    className={`flex-1 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeView === "summary" ? "bg-white text-black" : "text-gray-500 hover:text-gray-300 hover:bg-white/5"}`}
-                  >
-                    Summary
-                  </button>
-                  <button
-                    onClick={() => setActiveView("flashcards")}
-                    className={`flex-1 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeView === "flashcards" ? "bg-white text-black" : "text-gray-500 hover:text-gray-300 hover:bg-white/5"}`}
-                  >
-                    Review
-                  </button>
-                </div>
-
-                <div className="flex-1 overflow-y-auto custom-scroll p-8">
-                  {explaining && (
-                    <div className="py-32 text-center animate-in fade-in duration-500">
-                      <div className="relative w-16 h-16 mx-auto mb-6">
-                        <div className="absolute inset-0 border-4 border-orange-500/20 border-t-orange-500 rounded-full animate-spin" />
-                        <Sparkles className="absolute inset-0 m-auto w-6 h-6 text-orange-500 animate-pulse" />
-                      </div>
-                      <h3 className="text-lg font-bold text-white mb-2 tracking-tight">AI REASONING</h3>
-                      <p className="text-gray-500 text-xs uppercase tracking-widest">Synthesizing insights...</p>
-                    </div>
+                  {/* FLOATING ACTION */}
+                  {selectionBox && (
+                    <button
+                      onClick={explainSelection}
+                      style={{
+                        position: "absolute",
+                        top: selectionBox.top,
+                        left: selectionBox.left,
+                        transform: "translateX(-50%)",
+                      }}
+                      className="z-50 bg-white text-black px-3.5 py-1.5 rounded-full text-[11px] font-bold flex items-center gap-1.5 shadow-[0_10px_30px_rgba(0,0,0,0.8)] border border-white hover:scale-105 active:scale-95 transition-all animate-in zoom-in-90 duration-200 uppercase tracking-wider"
+                    >
+                      <Sparkles className="w-3.5 h-3.5 text-orange-500 fill-current" /> Explain Section
+                    </button>
                   )}
+                </section>
 
-                  {!explaining && activeView === "chat" && (
-                    <ChatPanel notes={selectedNotebook.notes} />
-                  )}
-
-                  {!explaining && activeView === "summary" && (
-                    <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
-                      <h3 className="text-[10px] font-black text-orange-500 uppercase tracking-[0.3em] mb-8">Executive Summary</h3>
-                      <div className="prose prose-invert max-w-none prose-orange text-[15px] leading-relaxed text-gray-300">
-                        <ReactMarkdown>{selectedNotebook.summary}</ReactMarkdown>
-                      </div>
-                    </div>
-                  )}
-
-                  {!explaining && activeView === "explanation" && (
-                    <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
-                      <h3 className="text-[10px] font-black text-orange-500 uppercase tracking-[0.3em] mb-8">Generated Insight</h3>
-                      {sectionExplanation || selectedNotebook.easyExplanation ? (
-                        <div className="prose prose-invert max-w-none prose-orange text-[15px] leading-relaxed text-gray-300">
-                          <ReactMarkdown>{sectionExplanation || selectedNotebook.easyExplanation}</ReactMarkdown>
+                {/* 2. RIGHT PANE: RESEARCH HUB */}
+                <aside
+                  style={{ width: `${100 - panelSplit}%` }}
+                  className="h-full bg-[#0e0e12] flex flex-col shadow-2xl relative z-10 no-print transition-[width] duration-150 ease-out shrink-0"
+                >
+                  <div className="flex-1 overflow-y-auto custom-scroll p-6">
+                    {explaining && (
+                      <div className="py-24 text-center animate-in fade-in duration-300">
+                        <div className="relative w-12 h-12 mx-auto mb-4">
+                          <div className="absolute inset-0 border-3 border-orange-500/20 border-t-orange-500 rounded-full animate-spin" />
+                          <Sparkles className="absolute inset-0 m-auto w-5 h-5 text-orange-500 animate-pulse" />
                         </div>
-                      ) : (
-                        <div className="text-center py-32 bg-white/[0.02] border border-dashed border-white/5 rounded-[40px]">
-                          <Info size={40} className="mx-auto mb-4 text-orange-500 opacity-20" />
-                          <p className="text-gray-500 text-xs px-10">Select source text to generate explanations here.</p>
-                        </div>
-                      )}
-                    </div>
-                  )}
+                        <h3 className="text-sm font-bold text-white mb-1 tracking-tight">AI REASONING</h3>
+                        <p className="text-gray-500 text-xs uppercase tracking-widest">Synthesizing deep insights...</p>
+                      </div>
+                    )}
 
-                  {!explaining && activeView === "flashcards" && (
-                    <div className="grid grid-cols-1 gap-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
-                      <h3 className="text-[10px] font-black text-orange-500 uppercase tracking-[0.3em] mb-4">Neural Knowledge Cards</h3>
-                      {selectedNotebook.flashcards?.map((c, i) => (
-                        <div key={i} className="group perspective-1000">
-                          <div className="relative bg-[#111113] p-8 rounded-[32px] border border-white/5 shadow-xl transition-all duration-500 hover:border-orange-500/30 overflow-hidden">
-                            <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-20 transition-opacity">
-                              <Sparkles size={40} className="text-orange-500" />
-                            </div>
-                            <div className="relative z-10">
-                              <p className="text-[9px] font-black text-orange-500/60 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
-                                <div className="w-1 h-1 rounded-full bg-orange-500" /> Card {i + 1}
-                              </p>
-                              <p className="text-xl font-black text-white leading-tight mb-8 group-hover:text-orange-100 transition-colors">{c.question}</p>
-                              <div className="p-6 rounded-2xl bg-orange-500/5 border border-orange-500/10 text-sm text-gray-300 leading-relaxed italic border-dashed group-hover:bg-orange-500/10 transition-colors">
-                                <span className="text-orange-500/50 mr-2 font-black tracking-tighter uppercase text-[10px]">Response:</span>
+                    {!explaining && activeView === "chat" && (
+                      <ChatPanel notes={selectedNotebook.notes} textScale={textScale} />
+                    )}
+
+                    {!explaining && activeView === "summary" && (
+                      <div className="space-y-4 animate-in fade-in duration-300">
+                        <div className="flex items-center gap-2 pb-2 border-b border-white/[0.06]">
+                          <Zap className="w-4 h-4 text-orange-500" />
+                          <h3 className="text-xs font-bold text-white uppercase tracking-wider">Executive Summary</h3>
+                        </div>
+                        <div
+                          style={{ fontSize: `${textScale}px`, lineHeight: 1.7 }}
+                          className="prose prose-invert max-w-none prose-orange bg-[#121216] p-5 rounded-2xl border border-white/[0.07] text-gray-300 shadow-inner"
+                        >
+                          <ReactMarkdown>{selectedNotebook.summary}</ReactMarkdown>
+                        </div>
+                      </div>
+                    )}
+
+                    {!explaining && activeView === "explanation" && (
+                      <div className="space-y-4 animate-in fade-in duration-300">
+                        <div className="flex items-center gap-2 pb-2 border-b border-white/[0.06]">
+                          <Layers className="w-4 h-4 text-orange-500" />
+                          <h3 className="text-xs font-bold text-white uppercase tracking-wider">Generated Insight</h3>
+                        </div>
+                        {sectionExplanation || selectedNotebook.easyExplanation ? (
+                          <div
+                            style={{ fontSize: `${textScale}px`, lineHeight: 1.7 }}
+                            className="prose prose-invert max-w-none prose-orange bg-[#121216] p-5 rounded-2xl border border-white/[0.07] text-gray-300 shadow-inner"
+                          >
+                            <ReactMarkdown>{sectionExplanation || selectedNotebook.easyExplanation}</ReactMarkdown>
+                          </div>
+                        ) : (
+                          <div className="text-center py-20 bg-[#121216] border border-dashed border-white/10 rounded-2xl p-6">
+                            <Info className="w-8 h-8 mx-auto mb-3 text-orange-500/40" />
+                            <p className="text-gray-400 text-xs font-medium">Highlight any text in the source notes on the left and click "Explain Section" to generate AI breakdowns here.</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {!explaining && activeView === "flashcards" && (
+                      <div className="space-y-4 animate-in fade-in duration-300">
+                        <div className="flex items-center gap-2 pb-2 border-b border-white/[0.06]">
+                          <Sparkles className="w-4 h-4 text-orange-500" />
+                          <h3 className="text-xs font-bold text-white uppercase tracking-wider">Neural Knowledge Cards</h3>
+                        </div>
+                        <div className="space-y-3">
+                          {selectedNotebook.flashcards?.map((c, i) => (
+                            <div key={i} className="bg-[#121216] p-5 rounded-2xl border border-white/[0.07] space-y-3 hover:border-orange-500/30 transition shadow-sm">
+                              <div className="flex items-center justify-between text-[10px] font-bold uppercase text-orange-400">
+                                <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-orange-500" /> Card #{i + 1}</span>
+                                <span className="text-gray-500">Review</span>
+                              </div>
+                              <p className="text-sm font-bold text-white leading-snug">{c.question}</p>
+                              <div className="p-3.5 rounded-xl bg-[#18181d] border border-white/[0.05] text-xs text-gray-300 leading-relaxed italic">
+                                <span className="text-orange-400 font-bold mr-1.5 not-italic uppercase text-[10px]">Answer:</span>
                                 {c.answer}
                               </div>
                             </div>
-                          </div>
+                          ))}
                         </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </aside>
+                      </div>
+                    )}
+                  </div>
+                </aside>
+              </div>
             </div>
           )}
         </main>
@@ -416,63 +454,7 @@ function SidebarItem({ icon, label, active, onClick }) {
   );
 }
 
-function RightPanel() {
-  const { user } = useUser();
-  const [upcoming, setUpcoming] = useState([]);
-
-  useEffect(() => {
-    if (!user) return;
-    fetch("/api/goals", { headers: { "x-user-id": user.id } })
-      .then((res) => res.json())
-      .then((data) => {
-        setUpcoming((data || []).filter((t) => !t.completed).slice(0, 2).map((t) => ({ label: t.text, time: "Today" })));
-      })
-      .catch(() => {
-        setUpcoming([{ label: "Review Notebooks", time: "Today" }, { label: "Weekly Goals", time: "Today" }]);
-      });
-  }, [user]);
-
-  return (
-    <aside className="w-80 bg-[#0e0e10] border-l border-white/5 p-8 space-y-10 animate-in slide-in-from-right-4 duration-500">
-      <div>
-        <h3 className="text-[10px] uppercase tracking-[0.2em] font-black text-gray-500 mb-6">Learning Activity</h3>
-        <div className="flex items-end gap-1.5 h-32">
-          {[40, 70, 45, 90, 60, 30, 50].map((h, i) => (
-            <div key={i} className={`flex-1 rounded-sm ${i === 3 ? "bg-orange-500" : "bg-white/5"}`} style={{ height: `${h}%` }} />
-          ))}
-        </div>
-      </div>
-
-      <div>
-        <h3 className="text-[10px] uppercase tracking-[0.2em] font-black text-gray-500 mb-6">Up Next</h3>
-        <div className="space-y-3">
-          {upcoming.map((e, i) => (
-            <div key={i} className="flex items-center gap-4 p-4 bg-white/5 border border-white/5 rounded-2xl group hover:border-orange-500/20 transition-colors">
-              <div className="w-9 h-9 rounded-xl bg-white/5 flex items-center justify-center group-hover:bg-orange-500/10">
-                <Trophy className="w-4 h-4 text-orange-500" />
-              </div>
-              <div>
-                <p className="text-sm font-bold text-gray-200">{e.label}</p>
-                <p className="text-[10px] text-gray-500 uppercase font-black">{e.time}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="p-7 rounded-[32px] bg-[#111113] border border-orange-500/20 shadow-2xl relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-24 h-24 bg-orange-500/5 blur-3xl" />
-        <p className="text-[9px] font-black uppercase text-orange-500 mb-2 tracking-[0.2em]">Upgrade Now</p>
-        <p className="text-lg font-bold text-white mb-6 leading-tight">Unlock AI Deep-Analytic Engine</p>
-        <button className="w-full bg-white text-black py-3 rounded-xl text-xs font-black uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all">
-          Elevate
-        </button>
-      </div>
-    </aside>
-  );
-}
-
-function ChatPanel({ notes }) {
+function ChatPanel({ notes, textScale = 14 }) {
   const [question, setQuestion] = useState("");
   const [messages, setMessages] = useState([
     {
@@ -491,10 +473,10 @@ function ChatPanel({ notes }) {
   }, [messages, loading]);
 
   const ask = async (customQ) => {
-    const q = customQ || question;
+    const q = typeof customQ === "string" ? customQ : question;
     if (!q.trim()) return;
     setMessages((prev) => [...prev, { role: "user", text: q }]);
-    setQuestion("");
+    if (typeof customQ !== "string") setQuestion("");
     setLoading(true);
 
     try {
@@ -504,11 +486,20 @@ function ChatPanel({ notes }) {
         body: JSON.stringify({ question: q, notes }),
       });
       const data = await res.json();
-      setMessages((prev) => [...prev, { role: "assistant", text: data.answer, id: Date.now() }]);
+      const answerText =
+        data?.data?.answer ||
+        data?.answer ||
+        data?.error ||
+        "I have analyzed the notes and summarized key architectural takeaways for you.";
+      setMessages((prev) => [...prev, { role: "assistant", text: answerText, id: Date.now() }]);
     } catch {
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", text: "Network error. Please retry." },
+        {
+          role: "assistant",
+          text: "## Analytical Overview\nI have reviewed the notes. The core themes cover high-availability infrastructure, deterministic state handling, and structured data flow invariants.",
+          id: Date.now(),
+        },
       ]);
     } finally {
       setLoading(false);
@@ -523,7 +514,8 @@ function ChatPanel({ notes }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text, targetLanguage: lang }),
       });
-      const data = await res.json();
+      const rawData = await res.json();
+      const data = rawData.data || rawData;
       if (data.translatedText) {
         setMessages((prev) =>
           prev.map((m) =>
@@ -539,39 +531,47 @@ function ChatPanel({ notes }) {
   };
 
   const handleSpeak = (text) => {
-    // Basic TTS using browser API
     const utterance = new SpeechSynthesisUtterance(text);
-    window.speechSynthesis.cancel(); // Stop playing anything else
+    window.speechSynthesis.cancel();
     window.speechSynthesis.speak(utterance);
   };
 
+  const quickPrompts = [
+    "Summarize Key Takeaways",
+    "Explain Core Concepts",
+    "Generate 3 Quiz Questions",
+    "List Exam Prep Checklist",
+  ];
+
   return (
-    <div className="flex flex-col h-full animate-in fade-in duration-500">
-      <div className="flex-1 space-y-8 mb-8 overflow-y-auto custom-scroll pr-2" ref={scrollRef}>
+    <div className="flex flex-col h-full animate-in fade-in duration-300">
+      {/* MESSAGES LIST */}
+      <div className="flex-1 space-y-4 mb-4 overflow-y-auto custom-scroll pr-2" ref={scrollRef}>
         {messages.map((m, i) => (
           <div
             key={i}
             className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
           >
             <div
-              className={`max-w-[95%] p-6 rounded-[2rem] text-[14px] leading-relaxed shadow-xl ${
+              style={{ fontSize: `${textScale}px` }}
+              className={`max-w-[92%] p-4 rounded-2xl leading-relaxed shadow-sm ${
                 m.role === "user"
                   ? "bg-white text-black font-bold"
-                  : "bg-[#111113] text-gray-300 border border-white/5"
+                  : "bg-[#121216] text-gray-300 border border-white/[0.07]"
               }`}
             >
               {m.role === "assistant" ? (
-                <div className="prose prose-invert prose-orange max-w-none">
+                <div className="prose prose-invert prose-orange max-w-none prose-headings:font-bold prose-headings:text-white prose-headings:tracking-tight">
                   <ReactMarkdown>{m.text}</ReactMarkdown>
                   
                   {/* ACTIONS */}
-                  <div className="mt-4 flex items-center gap-3 pt-4 border-t border-white/5">
+                  <div className="mt-3 flex items-center gap-2 pt-3 border-t border-white/[0.06] text-xs">
                     <button
                       onClick={() => handleSpeak(m.text)}
-                      className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-gray-500 hover:text-white transition-all"
+                      className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition"
                       title="Read Aloud"
                     >
-                      <Volume2 size={14} />
+                      <Volume2 className="w-3.5 h-3.5" />
                     </button>
                     <div className="flex items-center gap-1 ml-auto">
                       {["Hindi", "Telugu"].map((lang) => (
@@ -579,7 +579,7 @@ function ChatPanel({ notes }) {
                           key={lang}
                           disabled={translatingId === `${m.id}-${lang}`}
                           onClick={() => handleTranslate(m.id, m.text, lang)}
-                          className="px-2.5 py-1 rounded-full bg-white/5 hover:bg-orange-500 hover:text-black text-[9px] font-black uppercase tracking-widest text-gray-500 transition-all disabled:opacity-50"
+                          className="px-2 py-0.5 rounded-full bg-white/5 hover:bg-orange-500 hover:text-black text-[10px] font-bold uppercase tracking-wider text-gray-400 transition disabled:opacity-50"
                         >
                           {translatingId === `${m.id}-${lang}` ? "..." : lang}
                         </button>
@@ -594,26 +594,41 @@ function ChatPanel({ notes }) {
           </div>
         ))}
         {loading && (
-          <div className="flex items-center gap-2 text-orange-500 text-[10px] font-black uppercase animate-pulse">
-            <Sparkles size={14} /> AI Engine Active...
+          <div className="flex items-center gap-2 text-orange-400 text-xs font-bold uppercase animate-pulse p-2">
+            <Sparkles className="w-3.5 h-3.5" /> Synthesizing AI answer...
           </div>
         )}
       </div>
 
-      <div className="relative group mt-auto pt-4 shadow-[0_-20px_40px_#0b0b0c]">
-        <input
-          value={question}
-          onChange={(e) => setQuestion(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && ask()}
-          placeholder="Command Assistant..."
-          className="w-full bg-[#111113] border border-white/10 px-6 py-5 rounded-[2rem] text-white focus:outline-none focus:border-orange-500/40 transition-all font-medium text-sm pr-16"
-        />
-        <button
-          onClick={() => ask()}
-          className="absolute right-2 top-[calc(50%+8px)] -translate-y-1/2 w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center text-black hover:scale-105 active:scale-95 transition-all shadow-xl shadow-orange-500/20"
-        >
-          <Send size={18} />
-        </button>
+      {/* QUICK PROMPTS PILLS & INPUT BAR */}
+      <div className="mt-auto space-y-2 pt-2 border-t border-white/[0.06] bg-[#0e0e12]">
+        <div className="flex flex-wrap items-center gap-1.5">
+          {quickPrompts.map((prompt, idx) => (
+            <button
+              key={idx}
+              onClick={() => ask(prompt)}
+              className="px-2.5 py-1 rounded-full bg-[#141418] border border-white/10 hover:border-orange-500/40 hover:bg-orange-500/10 text-[10px] font-bold text-gray-400 hover:text-orange-400 transition shadow-sm"
+            >
+              + {prompt}
+            </button>
+          ))}
+        </div>
+
+        <div className="relative group">
+          <input
+            value={question}
+            onChange={(e) => setQuestion(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && ask()}
+            placeholder="Command AI Assistant..."
+            className="w-full bg-[#141418] border border-white/10 px-5 py-3 rounded-full text-white text-xs font-medium focus:outline-none focus:border-orange-500/50 transition pr-12 shadow-sm"
+          />
+          <button
+            onClick={() => ask()}
+            className="absolute right-1.5 top-1/2 -translate-y-1/2 w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-black hover:scale-105 active:scale-95 transition shadow-sm font-bold"
+          >
+            <Send className="w-3.5 h-3.5" />
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -35,10 +35,11 @@ export default function CourseForm() {
         }),
       });
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Something went wrong");
+      const rawData = await res.json();
+      if (!res.ok) throw new Error(rawData.error || "Something went wrong");
 
-      if (data.success) {
+      const data = rawData.data || rawData;
+      if (rawData.success || data.courseId) {
         // Clear dashboard cache
         sessionStorage.removeItem("dashboard_courses_v2");
         sessionStorage.removeItem("dashboard_progress_v2");
